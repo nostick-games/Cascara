@@ -23,6 +23,7 @@ class TileAnimationTestScene extends Phaser.Scene {
         this.load.image('tile-test-green-idle', 'assets/images/tiles/tile_green.png');
         this.load.image('tile-test-scarlet-idle', 'assets/images/tiles/tile_scarlet.png');
         this.load.image('tile-test-grey-idle', 'assets/images/tiles/tile_grey.png');
+        this.load.audio('tile-clap', 'assets/sounds/clap.mp3');
         this.load.spritesheet('tile-test-red-off', 'assets/images/tiles/tile_red_off.png', {
             frameWidth: 13,
             frameHeight: 13
@@ -411,6 +412,10 @@ class TileAnimationTestScene extends Phaser.Scene {
         const onAnimationKey = this.getAnimationKey(toColor, 'on');
         const offTextureKey = this.getTextureKey(fromColor, 'off');
         const onTextureKey = this.getTextureKey(toColor, 'on');
+
+        if (this.cache.audio?.exists('tile-clap')) {
+            this.sound.play('tile-clap', { volume: 0.28 });
+        }
 
         sprite.setTexture(offTextureKey);
         sprite.setFrame(0);

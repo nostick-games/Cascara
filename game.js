@@ -1,3 +1,9 @@
+try {
+    globalThis.CASCARA_SHOW_CHEATS = localStorage.getItem('cascara_show_cheats') === 'true';
+} catch (error) {
+    globalThis.CASCARA_SHOW_CHEATS = false;
+}
+
 // Configuration du jeu
 const config = {
     type: Phaser.AUTO,

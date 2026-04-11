@@ -5,6 +5,11 @@ class GameBoardEndPanel {
         this.scene = hud.scene;
         this.statsView = new GameBoardEndStatsView(this);
         this.trophiesView = new GameBoardEndTrophiesView(this);
+        this.layout = new GameBoardEndPanelLayout(this);
+        this.reveal = new GameBoardEndPanelReveal(this);
+        this.stateBuilder = new GameBoardEndPanelState(this);
+        this.view = new GameBoardEndPanelView(this);
+        this.widgets = new GameBoardEndPanelWidgets(this);
     }
 
     showGameOver(winData) {
@@ -43,222 +48,91 @@ class GameBoardEndPanel {
         const isNarrowViewport = this.scene.scale.width < 500;
         const viewportWidth = this.scene.scale.width;
         const viewportHeight = this.scene.scale.height;
-        const parchmentMaxWidth = isNarrowViewport
-            ? viewportWidth - 22
-            : Math.min(viewportWidth - 88, this.board.GAUGE_WIDTH + 90);
-        const parchmentMaxHeight = isNarrowViewport
-            ? viewportHeight - 28
-            : Math.min(viewportHeight - 72, viewportHeight * 0.78);
-        const parchmentScale = Math.min(
-            parchmentMaxWidth / 320,
-            parchmentMaxHeight / 480
-        ) * (isNarrowViewport ? 1 : 0.85);
-        const parchmentWidth = 320 * parchmentScale;
-        const parchmentHeight = 480 * parchmentScale;
-        const parchmentTopY = centerY - parchmentHeight / 2;
-        const parchmentBottomY = centerY + parchmentHeight / 2;
-        const parchmentTextWidth = Math.max(180, parchmentWidth - (isNarrowViewport ? 54 : 74));
+        const parchmentLayout = this.layout.buildParchmentLayout({
+            centerX,
+            centerY,
+            isNarrowViewport,
+            viewportWidth,
+            viewportHeight
+        });
+        const {
+            parchmentWidth,
+            parchmentHeight,
+            parchmentTopY,
+            parchmentBottomY,
+            parchmentTextWidth
+        } = parchmentLayout;
         const contentVerticalShift = isNarrowViewport ? -54 : -46;
         const parchment = this.scene.add.image(centerX, centerY, 'ui-parchment')
             .setOrigin(0.5)
-            .setScale(parchmentScale)
+            .setScale(parchmentLayout.parchmentScale)
             .setAngle(90)
             .setDepth(40);
 
-        const defeatMessages = [
-            TranslationManager.t('hud.defeat_message_1'),
-            TranslationManager.t('hud.defeat_message_2'),
-            TranslationManager.t('hud.defeat_message_3')
-        ];
-        const strategoVictoryMessages = [
-            TranslationManager.t('stratego.victory_message_1'),
-            TranslationManager.t('stratego.victory_message_2'),
-            TranslationManager.t('stratego.victory_message_3')
-        ];
-        const strategoDefeatMessages = [
-            TranslationManager.t('stratego.defeat_message_1'),
-            TranslationManager.t('stratego.defeat_message_2'),
-            TranslationManager.t('stratego.defeat_message_3')
-        ];
-        const fighterVictoryMessages = [
-            TranslationManager.t('fighter.victory_message_1'),
-            TranslationManager.t('fighter.victory_message_2'),
-            TranslationManager.t('fighter.victory_message_3')
-        ];
-        const fighterDefeatMessages = [
-            TranslationManager.t('fighter.defeat_message_1'),
-            TranslationManager.t('fighter.defeat_message_2'),
-            TranslationManager.t('fighter.defeat_message_3')
-        ];
-        const bossRushVictoryMessages = [
-            TranslationManager.t('boss_rush.victory_message_1'),
-            TranslationManager.t('boss_rush.victory_message_2'),
-            TranslationManager.t('boss_rush.victory_message_3')
-        ];
-        const bossRushDefeatMessages = [
-            TranslationManager.t('boss_rush.defeat_message_1'),
-            TranslationManager.t('boss_rush.defeat_message_2'),
-            TranslationManager.t('boss_rush.defeat_message_3')
-        ];
-        const bossVictoryMessage =
-            resultType === 'victory' && typeof this.scene.getStoryBossVictoryMessage === 'function'
-                ? this.scene.getStoryBossVictoryMessage()
-                : null;
-        const footerMessage = resultType === 'defeat' ? TranslationManager.t('hud.try_again') : '';
-        const strategoVictoryFollowup =
-            resultType === 'victory' && this.scene.isStrategoMode
-                ? TranslationManager.t('stratego.victory_followup')
-                : '';
-        const bossRushVictoryFollowup =
-            resultType === 'victory' && this.scene.isBossRushMode && typeof this.scene.getBossRushContinuationMessage === 'function'
-                ? this.scene.getBossRushContinuationMessage()
-                : '';
-        const canReturnToStoryMap =
-            resultType === 'victory' &&
-            typeof this.scene.canReturnToStoryMapAfterVictory === 'function' &&
-            this.scene.canReturnToStoryMapAfterVictory();
-        const shouldReturnToMainMenu =
-            resultType === 'victory' &&
-            typeof this.scene.shouldReturnToMainMenuAfterVictory === 'function' &&
-            this.scene.shouldReturnToMainMenuAfterVictory();
-        const shouldConvertGoldToStars = shouldReturnToMainMenu && this.scene.getCurrentBossTypeKey?.() === 'OGRE';
-        const ogreVictoryMessageParts =
-            bossVictoryMessage && shouldConvertGoldToStars
-                ? bossVictoryMessage.split('\n').filter(Boolean)
-                : [];
-        const ogreMainVictoryMessage = ogreVictoryMessageParts.length > 0
-            ? ogreVictoryMessageParts[0]
-            : bossVictoryMessage;
-        const ogrePostConversionMessage = ogreVictoryMessageParts.length > 1
-            ? ogreVictoryMessageParts.slice(1).join('\n')
-            : '';
-        const titleMessage = this.scene.isStrategoMode
-            ? Phaser.Utils.Array.GetRandom(
-                resultType === 'victory' ? strategoVictoryMessages : strategoDefeatMessages
-            )
-            : this.scene.isBossRushMode
-            ? Phaser.Utils.Array.GetRandom(
-                resultType === 'victory' ? bossRushVictoryMessages : bossRushDefeatMessages
-            )
-            : this.scene.isFightMode
-            ? Phaser.Utils.Array.GetRandom(
-                resultType === 'victory' ? fighterVictoryMessages : fighterDefeatMessages
-            )
-            : resultType === 'victory'
-            ? ((shouldConvertGoldToStars ? ogreMainVictoryMessage : bossVictoryMessage) || TranslationManager.t('hud.victory_message'))
-            : Phaser.Utils.Array.GetRandom(defeatMessages);
-        const isStoryBattle = this.scene.storyContext?.source === 'story';
-        const canUsePhoenixRetry =
-            resultType === 'defeat' &&
-            isStoryBattle &&
-            Boolean(this.scene.storyNodeType) &&
-            Boolean(this.scene.storyContext?.storyState) &&
-            StoryFragmentInventory.getCount(this.scene.storyContext?.storyState, 'PHOENIX') > 0;
-        const canUseStrategoRetry =
-            resultType === 'defeat' &&
-            Boolean(this.scene.isStrategoMode) &&
-            Boolean(this.scene.strategoConfig);
-        const canContinueBossRush =
-            resultType === 'victory' &&
-            Boolean(this.scene.isBossRushMode) &&
-            typeof this.scene.canContinueBossRushAfterVictory === 'function' &&
-            this.scene.canContinueBossRushAfterVictory();
-        const bossRushNextPotions = canContinueBossRush && typeof this.scene.getBossRushNextPotions === 'function'
-            ? this.scene.getBossRushNextPotions()
-            : [];
-        const hasBossRushNextPotions = bossRushNextPotions.length > 0;
-        const hideStatsButton = Boolean(this.scene.isStrategoMode || this.scene.isFightMode || this.scene.isBossRushMode);
-        const hasStoryVictoryRewards = canReturnToStoryMap || shouldConvertGoldToStars;
-        const storyGoldReward = hasStoryVictoryRewards ? (this.scene.storyGoldReward || 0) : 0;
-        const storyStarsReward = typeof this.scene.getEndStarsReward === 'function'
-            ? this.scene.getEndStarsReward(resultType)
-            : 0;
-        const ogreConversionStars = shouldConvertGoldToStars && typeof this.scene.getOgreGoldConversionStars === 'function'
-            ? this.scene.getOgreGoldConversionStars()
-            : 0;
-        const unlockedStoryPotion = canReturnToStoryMap ? this.scene.getStoryUnlockedPotionDefinition() : null;
-        const rewardedStoryFragment = canReturnToStoryMap && !unlockedStoryPotion
-            ? this.scene.getStoryRewardFragmentDefinition()
-            : null;
-        const shouldShowFightBossUnlockMessage =
-            resultType === 'victory' &&
-            typeof this.scene.shouldShowFightBossUnlockMessage === 'function' &&
-            this.scene.shouldShowFightBossUnlockMessage();
-        const baseGold = this.scene.storyContext?.storyState?.gold || 0;
-        const baseStars = MetaProgression.getStars();
-        const rewardSummaryTextValue = shouldConvertGoldToStars
-            ? TranslationManager.t('story.gold_reward', { value: storyGoldReward })
-            : storyGoldReward > 0
-            ? TranslationManager.t('story.gold_and_stars_reward', {
-                gold: storyGoldReward,
-                stars: storyStarsReward
-            })
-            : TranslationManager.t(
-                resultType === 'defeat' ? 'story.stars_reward_defeat' : 'story.stars_reward',
-                { value: storyStarsReward }
-            );
-        const hasRewardSummary = storyGoldReward > 0 || storyStarsReward > 0;
+        const endState = this.stateBuilder.build(resultType);
+        const {
+            baseGold,
+            baseStars,
+            bossRushNextPotions,
+            bossRushVictoryFollowup,
+            bossVictoryMessage,
+            canContinueBossRush,
+            canReturnToStoryMap,
+            canUsePhoenixRetry,
+            canUseStrategoRetry,
+            footerMessage,
+            goldRewardAnimationDuration,
+            hasBossRushNextPotions,
+            hasBossVictoryMessage,
+            hasRewardSummary,
+            hideStatsButton,
+            ogreConversionStars,
+            ogrePostConversionMessage,
+            rewardedStoryFragment,
+            rewardSummaryTextValue,
+            shouldConvertGoldToStars,
+            shouldReturnToMainMenu,
+            shouldShowFightBossUnlockMessage,
+            storyGoldReward,
+            storyStarsReward,
+            strategoVictoryFollowup,
+            titleMessage,
+            unlockedStoryPotion
+        } = endState;
         if (storyStarsReward > 0 || ogreConversionStars > 0) {
             MetaProgression.addStars(storyStarsReward + ogreConversionStars);
         }
-        const goldRewardAnimationDuration = Math.min(1800, Math.max(700, storyGoldReward * 35));
-        const hasBossVictoryMessage = Boolean(bossVictoryMessage);
-        const messageY = hasBossVictoryMessage
-            ? centerY - (isNarrowViewport ? 104 : 122)
-            : centerY - (isNarrowViewport ? 72 : 82);
-        const footerY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 18 : 8)
-            : centerY - (isNarrowViewport ? 22 : 28);
-        const goldRewardTextY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 26 : 20)
-            : centerY - (isNarrowViewport ? 22 : 28);
-        const goldRewardDisplayY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 58 : 64)
-            : centerY + (isNarrowViewport ? 12 : 16);
-        const rewardTitleY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 92 : 104)
-            : centerY + (isNarrowViewport ? 44 : 52);
-        const rewardDisplayY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 138 : 154)
-            : centerY + (isNarrowViewport ? 90 : 104);
-        const conversionTextY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 92 : 104)
-            : centerY + (isNarrowViewport ? 44 : 52);
-        const starDisplayY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 128 : 144)
-            : centerY + (isNarrowViewport ? 86 : 98);
-        const rewardSummaryY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 26 : 20)
-            : centerY - (isNarrowViewport ? 22 : 28);
-        const countersRowY = hasBossVictoryMessage
-            ? centerY + (isNarrowViewport ? 58 : 64)
-            : centerY + (isNarrowViewport ? 12 : 16);
-        const shouldLowerDefeatRewardSummary =
-            resultType === 'defeat' &&
-            !hasBossVictoryMessage;
-        const adjustedRewardSummaryY = shouldLowerDefeatRewardSummary
-            ? rewardSummaryY + (isNarrowViewport ? 38 : 44)
-            : rewardSummaryY;
-        const adjustedCountersRowY = shouldLowerDefeatRewardSummary
-            ? countersRowY + (isNarrowViewport ? 38 : 44)
-            : countersRowY;
-        const ogreConversionSpacing = shouldConvertGoldToStars
-            ? (isNarrowViewport ? 42 : 50)
-            : 0;
-        const fightBossUnlockSpacing = shouldShowFightBossUnlockMessage
-            ? (isNarrowViewport ? 34 : 42)
-            : 0;
-        const strategoVictorySpacing = strategoVictoryFollowup
-            ? (isNarrowViewport ? 32 : 40)
-            : 0;
-        const bossRushVictorySpacing = bossRushVictoryFollowup
-            ? (isNarrowViewport ? 26 : 32)
-            : 0;
-        const adjustedRewardTitleY = rewardTitleY + fightBossUnlockSpacing;
-        const adjustedRewardDisplayY = rewardDisplayY + fightBossUnlockSpacing;
-        const fightBossUnlockTextY = Math.round((adjustedCountersRowY + adjustedRewardTitleY) / 2) + 8;
-        const bossRushNextPotionsTitleY = rewardTitleY;
-        const bossRushNextPotionsDisplayY = rewardDisplayY + (isNarrowViewport ? 8 : 12);
+        const contentLayout = this.layout.buildEndPanelContentLayout({
+            centerY,
+            isNarrowViewport,
+            resultType,
+            hasBossVictoryMessage,
+            shouldConvertGoldToStars,
+            shouldShowFightBossUnlockMessage,
+            strategoVictoryFollowup,
+            bossRushVictoryFollowup
+        });
+        const {
+            messageY,
+            footerY,
+            goldRewardTextY,
+            goldRewardDisplayY,
+            rewardTitleY,
+            rewardDisplayY,
+            conversionTextY,
+            starDisplayY,
+            adjustedRewardSummaryY,
+            adjustedCountersRowY,
+            ogreConversionSpacing,
+            fightBossUnlockSpacing,
+            strategoVictorySpacing,
+            bossRushVictorySpacing,
+            adjustedRewardTitleY,
+            adjustedRewardDisplayY,
+            fightBossUnlockTextY,
+            bossRushNextPotionsTitleY,
+            bossRushNextPotionsDisplayY
+        } = contentLayout;
 
         const messageText = this.scene.add.text(centerX, messageY + contentVerticalShift, titleMessage, {
             fontSize: isNarrowViewport ? '19px' : '24px',
@@ -511,10 +385,10 @@ class GameBoardEndPanel {
                     delay: (strategoVictoryFollowup || bossRushVictoryFollowup) ? 180 : 0,
                     run: () => {
                         if (strategoVictoryFollowup) {
-                            this.revealEndPanelTarget(strategoVictoryText);
+                            this.reveal.revealTarget(strategoVictoryText);
                         }
                         if (bossRushVictoryFollowup) {
-                            this.revealEndPanelTarget(bossRushVictoryText);
+                            this.reveal.revealTarget(bossRushVictoryText);
                         }
                     }
                 },
@@ -522,7 +396,7 @@ class GameBoardEndPanel {
                     delay: 350,
                     run: () => {
                         if (hasRewardSummary) {
-                            this.revealEndPanelTarget(rewardSummaryText);
+                            this.reveal.revealTarget(rewardSummaryText);
                         }
                     }
                 },
@@ -531,13 +405,13 @@ class GameBoardEndPanel {
                     run: () => {
                         if (storyGoldReward > 0 || storyStarsReward > 0) {
                             if (storyGoldReward > 0) {
-                                this.revealEndPanelTarget(goldRewardDisplay.container, 0, () => {
+                                this.reveal.revealTarget(goldRewardDisplay.container, 0, () => {
                                     goldRewardDisplay.setVisible(true);
                                 });
                             }
                             if (!shouldConvertGoldToStars) {
                                 if (storyStarsReward > 0) {
-                                    this.revealEndPanelTarget(starRewardDisplay.container, 0, () => {
+                                    this.reveal.revealTarget(starRewardDisplay.container, 0, () => {
                                         starRewardDisplay.setVisible(true);
                                     });
                                 }
@@ -557,7 +431,7 @@ class GameBoardEndPanel {
                     delay: hasBossRushNextPotions ? 700 : 0,
                     run: () => {
                         if (hasBossRushNextPotions) {
-                            this.revealEndPanelTarget(bossRushNextPotionsText);
+                            this.reveal.revealTarget(bossRushNextPotionsText);
                         }
                     }
                 },
@@ -565,7 +439,7 @@ class GameBoardEndPanel {
                     delay: hasBossRushNextPotions ? 320 : 0,
                     run: () => {
                         if (hasBossRushNextPotions) {
-                            this.revealEndPanelTarget(bossRushNextPotionsDisplay.container, 0, () => {
+                            this.reveal.revealTarget(bossRushNextPotionsDisplay.container, 0, () => {
                                 bossRushNextPotionsDisplay.setVisible(true);
                             });
                         }
@@ -575,7 +449,7 @@ class GameBoardEndPanel {
                     delay: shouldShowFightBossUnlockMessage ? 360 : 0,
                     run: () => {
                         if (shouldShowFightBossUnlockMessage) {
-                            this.revealEndPanelTarget(fightBossUnlockText, 0, () => {
+                            this.reveal.revealTarget(fightBossUnlockText, 0, () => {
                                 if (typeof this.scene.markFightBossUnlockMessageSeen === 'function') {
                                     this.scene.markFightBossUnlockMessageSeen();
                                 }
@@ -588,7 +462,7 @@ class GameBoardEndPanel {
                         {
                             delay: goldRewardAnimationDuration + 180,
                             run: () => {
-                                this.revealEndPanelTarget(conversionText);
+                                this.reveal.revealTarget(conversionText);
                             }
                         },
                         {
@@ -597,7 +471,7 @@ class GameBoardEndPanel {
                                 if (storyGoldReward > 0) {
                                     goldRewardDisplay.setVisible(true);
                                 }
-                                this.revealEndPanelTarget(starRewardDisplay.container, 0, () => {
+                                this.reveal.revealTarget(starRewardDisplay.container, 0, () => {
                                     starRewardDisplay.setVisible(true);
                                 });
                                 this.animateGoldToStarsConversion(
@@ -608,7 +482,7 @@ class GameBoardEndPanel {
                                     () => {
                                         ogreConversionCompleted = true;
                                         if (ogrePostConversionMessage) {
-                                            this.revealEndPanelTarget(postConversionText);
+                                            this.reveal.revealTarget(postConversionText);
                                         }
                                         menuButton.hitArea.setInteractive({ useHandCursor: true });
                                         menuButton.container.setAlpha(1);
@@ -622,7 +496,7 @@ class GameBoardEndPanel {
                             delay: 800,
                             run: () => {
                                 if (unlockedStoryPotion || rewardedStoryFragment) {
-                                    this.revealEndPanelTarget(potionUnlockText);
+                                    this.reveal.revealTarget(potionUnlockText);
                                 }
                             }
                         },
@@ -630,7 +504,7 @@ class GameBoardEndPanel {
                             delay: 420,
                             run: () => {
                                 if (unlockedStoryPotion || rewardedStoryFragment) {
-                                    this.revealEndPanelTarget(potionUnlockDisplay.container, 0, () => {
+                                    this.reveal.revealTarget(potionUnlockDisplay.container, 0, () => {
                                         potionUnlockDisplay.setVisible(true);
                                     });
                                 }
@@ -653,132 +527,52 @@ class GameBoardEndPanel {
 
         const setView = (view) => {
             activeView = view;
-            const isMain = view === 'main';
-            const isStats = view === 'stats';
-            const isTrophies = view === 'trophies';
-
-            if (isMain && canReturnToStoryMap) {
-                messageText.setVisible(true);
-                footerText.setVisible(false);
-                strategoVictoryText.setVisible(false);
-                rewardSummaryText.setVisible(rewardSequencePlayed && hasRewardSummary);
-                goldRewardDisplay.setVisible(rewardSequencePlayed && storyGoldReward > 0);
-                conversionText.setVisible(false);
-                starRewardDisplay.setVisible(rewardSequencePlayed && storyStarsReward > 0);
-                bossRushNextPotionsText.setVisible(rewardSequencePlayed && hasBossRushNextPotions);
-                bossRushNextPotionsDisplay.setVisible(rewardSequencePlayed && hasBossRushNextPotions);
-                fightBossUnlockText.setVisible(rewardSequencePlayed && shouldShowFightBossUnlockMessage);
-                potionUnlockText.setVisible(rewardSequencePlayed && Boolean(unlockedStoryPotion || rewardedStoryFragment));
-                potionUnlockDisplay.setVisible(rewardSequencePlayed && Boolean(unlockedStoryPotion || rewardedStoryFragment));
-                if (!rewardSequencePlayed) {
-                    revealRewardSequence();
-                }
-            } else if (isMain && shouldConvertGoldToStars) {
-                messageText.setVisible(true);
-                footerText.setVisible(false);
-                strategoVictoryText.setVisible(false);
-                rewardSummaryText.setVisible(rewardSequencePlayed && hasRewardSummary);
-                goldRewardDisplay.setVisible(rewardSequencePlayed && storyGoldReward > 0);
-                conversionText.setVisible(rewardSequencePlayed);
-                postConversionText.setVisible(rewardSequencePlayed && ogreConversionCompleted && Boolean(ogrePostConversionMessage));
-                starRewardDisplay.setVisible(rewardSequencePlayed);
-                bossRushNextPotionsText.setVisible(false);
-                bossRushNextPotionsDisplay.setVisible(false);
-                fightBossUnlockText.setVisible(rewardSequencePlayed && shouldShowFightBossUnlockMessage);
-                potionUnlockText.setVisible(false);
-                potionUnlockDisplay.setVisible(false);
-                if (!rewardSequencePlayed) {
-                    revealRewardSequence();
-                }
-            } else if (isMain && hasRewardSummary) {
-                messageText.setVisible(true);
-                footerText.setVisible(isMain && Boolean(footerMessage));
-                strategoVictoryText.setVisible(false);
-                bossRushVictoryText.setVisible(isMain && Boolean(bossRushVictoryFollowup));
-                rewardSummaryText.setVisible(rewardSequencePlayed);
-                goldRewardDisplay.setVisible(rewardSequencePlayed && storyGoldReward > 0);
-                conversionText.setVisible(false);
-                postConversionText.setVisible(false);
-                starRewardDisplay.setVisible(rewardSequencePlayed && storyStarsReward > 0);
-                bossRushNextPotionsText.setVisible(rewardSequencePlayed && hasBossRushNextPotions);
-                bossRushNextPotionsDisplay.setVisible(rewardSequencePlayed && hasBossRushNextPotions);
-                fightBossUnlockText.setVisible(rewardSequencePlayed && shouldShowFightBossUnlockMessage);
-                potionUnlockText.setVisible(false);
-                potionUnlockDisplay.setVisible(false);
-                if (!rewardSequencePlayed) {
-                    revealRewardSequence();
-                }
-            } else if (isMain && hasBossRushNextPotions) {
-                messageText.setVisible(true);
-                footerText.setVisible(isMain && Boolean(footerMessage));
-                strategoVictoryText.setVisible(false);
-                bossRushVictoryText.setVisible(isMain && Boolean(bossRushVictoryFollowup));
-                rewardSummaryText.setVisible(false);
-                goldRewardDisplay.setVisible(false);
-                conversionText.setVisible(false);
-                postConversionText.setVisible(false);
-                starRewardDisplay.setVisible(false);
-                bossRushNextPotionsText.setVisible(rewardSequencePlayed);
-                bossRushNextPotionsDisplay.setVisible(rewardSequencePlayed);
-                fightBossUnlockText.setVisible(false);
-                potionUnlockText.setVisible(false);
-                potionUnlockDisplay.setVisible(false);
-                if (!rewardSequencePlayed) {
-                    revealRewardSequence();
-                }
-            } else {
-                messageText.setVisible(isMain);
-                footerText.setVisible(isMain && Boolean(footerMessage) && !canReturnToStoryMap);
-                strategoVictoryText.setVisible(false);
-                bossRushVictoryText.setVisible(false);
-                rewardSummaryText.setVisible(false);
-                goldRewardDisplay.setVisible(false);
-                conversionText.setVisible(false);
-                postConversionText.setVisible(false);
-                starRewardDisplay.setVisible(false);
-                bossRushNextPotionsText.setVisible(false);
-                bossRushNextPotionsDisplay.setVisible(false);
-                fightBossUnlockText.setVisible(false);
-                potionUnlockText.setVisible(false);
-                potionUnlockDisplay.setVisible(false);
-            }
-            statsText.setVisible(isStats);
-            potionStatsRow.container.setVisible(isStats);
-            trophyList.setVisible(isTrophies);
-
-            phoenixButton.container.setVisible(Boolean(canUsePhoenixRetry));
-            retryButton.container.setVisible(Boolean(canUseStrategoRetry));
-            const canSwitchSecondaryView = !shouldConvertGoldToStars || ogreConversionCompleted;
-            statsButton.container.setVisible(!hideStatsButton && (isMain || isTrophies) && canSwitchSecondaryView);
-            trophiesButton.container.setVisible((isMain || isStats) && canSwitchSecondaryView);
-            menuButton.container.setVisible(true);
-            if (shouldConvertGoldToStars) {
-                menuButton.container.setAlpha(ogreConversionCompleted ? 1 : 0.7);
-            }
-
-            if (isTrophies) {
-                this.scene.trophies.markViewed();
-                trophiesDot.setVisible(false);
-            }
-
-            if (isTrophies) {
-                phoenixButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 116 : 128));
-                retryButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 74 : 82));
-                statsButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 74 : 82));
-                menuButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 32 : 36));
-            } else if (isStats) {
-                phoenixButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 116 : 128));
-                retryButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 74 : 82));
-                trophiesButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 74 : 82));
-                menuButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 32 : 36));
-            } else {
-                phoenixButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 158 : 174));
-                retryButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 158 : 174));
-                if (!hideStatsButton) {
-                    statsButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 116 : 128));
-                }
-                menuButton.container.setPosition(centerX, parchmentBottomY - (isNarrowViewport ? 32 : 36));
-            }
+            this.view.applyView(view, {
+                centerX,
+                parchmentBottomY,
+                isNarrowViewport,
+                rewardSequencePlayed,
+                hasRewardSummary,
+                storyGoldReward,
+                storyStarsReward,
+                hasBossRushNextPotions,
+                shouldShowFightBossUnlockMessage,
+                unlockedStoryPotion,
+                rewardedStoryFragment,
+                canReturnToStoryMap,
+                shouldConvertGoldToStars,
+                ogreConversionCompleted,
+                ogrePostConversionMessage,
+                footerMessage,
+                bossRushVictoryFollowup,
+                canUsePhoenixRetry,
+                canUseStrategoRetry,
+                hideStatsButton,
+                revealRewardSequence,
+                messageText,
+                footerText,
+                strategoVictoryText,
+                bossRushVictoryText,
+                rewardSummaryText,
+                goldRewardDisplay,
+                conversionText,
+                postConversionText,
+                starRewardDisplay,
+                bossRushNextPotionsText,
+                bossRushNextPotionsDisplay,
+                fightBossUnlockText,
+                potionUnlockText,
+                potionUnlockDisplay,
+                statsText,
+                potionStatsRow,
+                trophyList,
+                phoenixButton,
+                retryButton,
+                statsButton,
+                trophiesButton,
+                menuButton,
+                trophiesDot
+            });
         };
 
         phoenixButton.hitArea.on('pointerdown', () => {
@@ -891,30 +685,28 @@ class GameBoardEndPanel {
             potionUnlockDisplay.container
         ];
 
-        introContentTargets.forEach((target) => this.prepareEndPanelRevealTarget(target));
+        this.reveal.prepareTargets(introContentTargets);
         introButtons.forEach((button) => {
-            this.prepareEndPanelRevealTarget(button.container);
+            this.reveal.prepareTarget(button.container);
             button.hitArea.disableInteractive();
         });
 
-        this.playParchmentReveal(parchment, centerX, parchmentTopY, parchmentWidth, parchmentHeight, () => {
-            this.revealEndPanelTarget(messageText, 0);
-            if (footerText.visible) {
-                this.revealEndPanelTarget(footerText, 120);
-            }
-            if (strategoVictoryText.visible) {
-                this.revealEndPanelTarget(strategoVictoryText, 120);
-            }
-            if (bossRushVictoryText.visible) {
-                this.revealEndPanelTarget(bossRushVictoryText, 120);
-            }
-
-            this.scene.time.delayedCall(230, () => {
+        this.reveal.revealIntro({
+            parchment,
+            centerX,
+            parchmentTopY,
+            parchmentWidth,
+            parchmentHeight,
+            messageText,
+            footerText,
+            strategoVictoryText,
+            bossRushVictoryText,
+            onRewardsReady: () => {
                 canStartRewardSequence = true;
                 revealRewardSequence();
-            });
-
-            const buttonsToReveal = introButtons.filter((button) => {
+            },
+            introButtons,
+            buttonsToReveal: introButtons.filter((button) => {
                 if (button === phoenixButton) {
                     return Boolean(canUsePhoenixRetry);
                 }
@@ -928,302 +720,32 @@ class GameBoardEndPanel {
                 }
 
                 return true;
-            });
-
-            const buttonRevealDelay = 1100;
-            buttonsToReveal.forEach((button, index) => {
-                this.revealEndPanelTarget(button.container, buttonRevealDelay + index * 90, () => {
-                    const shouldEnableMenuButton = !shouldConvertGoldToStars || ogreConversionCompleted;
-                    if (
-                        button === menuButton
-                            ? shouldEnableMenuButton
-                            : button.container.visible
-                    ) {
-                        button.hitArea.setInteractive({ useHandCursor: true });
-                    }
-                });
-            });
-        });
-    }
-
-    playParchmentReveal(parchment, centerX, topY, width, height, onComplete = null) {
-        const maskGraphics = this.scene.make.graphics({ x: 0, y: 0, add: false });
-        const mask = maskGraphics.createGeometryMask();
-        parchment.setMask(mask);
-
-        const progress = { value: 0 };
-        this.scene.tweens.add({
-            targets: progress,
-            value: height,
-            duration: 360,
-            ease: 'Cubic.Out',
-            onUpdate: () => {
-                maskGraphics.clear();
-                maskGraphics.fillStyle(0xffffff, 1);
-                maskGraphics.fillRect(centerX - width / 2, topY, width, progress.value);
-            },
-            onComplete: () => {
-                parchment.clearMask();
-                maskGraphics.destroy();
-                if (onComplete) {
-                    onComplete();
-                }
-            }
-        });
-    }
-
-    prepareEndPanelRevealTarget(target) {
-        if (!target) {
-            return;
-        }
-        target.setData('endPanelRevealBaseY', target.y);
-        target.setAlpha(0);
-        target.setVisible(false);
-        target.y += 10;
-    }
-
-    revealEndPanelTarget(target, delay = 0, onComplete = null) {
-        if (!target) {
-            if (onComplete) {
-                onComplete();
-            }
-            return;
-        }
-
-        this.scene.time.delayedCall(delay, () => {
-            target.setVisible(true);
-            this.scene.tweens.add({
-                targets: target,
-                alpha: 1,
-                y: target.getData('endPanelRevealBaseY') ?? target.y,
-                duration: 180,
-                ease: 'Quad.Out',
-                onComplete: () => {
-                    if (onComplete) {
-                        onComplete();
-                    }
-                }
-            });
+            }),
+            buttonRevealDelay: 1100,
+            menuButton,
+            shouldConvertGoldToStars,
+            ogreConversionCompleted: () => ogreConversionCompleted
         });
     }
 
     createStoryGoldRewardDisplay(centerX, y, isNarrowViewport, reward, initialValue = 0) {
-        const container = this.scene.add.container(centerX, y).setDepth(41);
-        const iconSize = isNarrowViewport ? 24 : 28;
-        const icon = this.scene.add.image(-(isNarrowViewport ? 20 : 24), 0, 'story-gold')
-            .setOrigin(0.5)
-            .setDisplaySize(iconSize, iconSize);
-        const amountText = this.scene.add.text(isNarrowViewport ? 0 : 4, 0, `${initialValue}`, {
-            fontSize: isNarrowViewport ? '18px' : '22px',
-            fill: '#3b2419',
-            fontFamily: 'Vollkorn',
-            fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
-
-        container.add([icon, amountText]);
-        container.setVisible(false);
-        let animationStarted = false;
-        let currentValue = initialValue;
-
-        return {
-            container,
-            setValue: (value) => {
-                currentValue = Math.max(0, Math.round(value));
-                amountText.setText(`${currentValue}`);
-            },
-            getValue: () => currentValue,
-            setVisible: (visible) => {
-                container.setVisible(visible);
-                if (visible && reward > 0 && !animationStarted) {
-                    animationStarted = true;
-                    amountText.setText(`${initialValue}`);
-                    this.scene.tweens.addCounter({
-                        from: initialValue,
-                        to: initialValue + reward,
-                        duration: Math.min(1800, Math.max(700, reward * 35)),
-                        ease: 'Sine.easeOut',
-                        onUpdate: (tween) => {
-                            currentValue = Math.round(tween.getValue());
-                            amountText.setText(`${currentValue}`);
-                        }
-                    });
-                }
-            }
-        };
+        return this.widgets.createStoryGoldRewardDisplay(centerX, y, isNarrowViewport, reward, initialValue);
     }
 
     createStoryStarRewardDisplay(centerX, y, isNarrowViewport, initialValue = 0) {
-        const container = this.scene.add.container(centerX, y).setDepth(41);
-        const iconSize = isNarrowViewport ? 24 : 28;
-        const icon = this.scene.add.image(-(isNarrowViewport ? 20 : 24), 0, 'meta-star')
-            .setOrigin(0.5)
-            .setDisplaySize(iconSize, iconSize);
-        const amountText = this.scene.add.text(isNarrowViewport ? 0 : 4, 0, `${initialValue}`, {
-            fontSize: isNarrowViewport ? '18px' : '22px',
-            fill: '#3b2419',
-            fontFamily: 'Vollkorn',
-            fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
-
-        container.add([icon, amountText]);
-        container.setVisible(false);
-        let currentValue = initialValue;
-        let animationStarted = false;
-
-        return {
-            container,
-            setVisible: (visible) => {
-                container.setVisible(visible);
-            },
-            setValue: (value) => {
-                currentValue = Math.max(0, Math.round(value));
-                amountText.setText(`${currentValue}`);
-            },
-            getValue: () => currentValue,
-            animateReward: (fromValue, toValue) => {
-                if (animationStarted) {
-                    return;
-                }
-                animationStarted = true;
-                this.scene.tweens.addCounter({
-                    from: fromValue,
-                    to: toValue,
-                    duration: Math.min(1800, Math.max(700, Math.abs(toValue - fromValue) * 120)),
-                    ease: 'Sine.easeOut',
-                    onUpdate: (tween) => {
-                        currentValue = Math.round(tween.getValue());
-                        amountText.setText(`${currentValue}`);
-                    }
-                });
-            }
-        };
+        return this.widgets.createStoryStarRewardDisplay(centerX, y, isNarrowViewport, initialValue);
     }
 
     animateGoldToStarsConversion(goldDisplay, starDisplay, totalGold, baseStars, onComplete = null) {
-        const safeTotalGold = Math.max(0, Math.floor(totalGold || 0));
-        const awardedStars = safeTotalGold > 0 ? Math.ceil(safeTotalGold / 10) : 0;
-
-        goldDisplay.setValue(safeTotalGold);
-        starDisplay.setValue(baseStars);
-
-        if (safeTotalGold <= 0) {
-            if (onComplete) {
-                onComplete();
-            }
-            return;
-        }
-
-        const duration = Math.min(2600, Math.max(1000, safeTotalGold * 18));
-        this.scene.tweens.addCounter({
-            from: safeTotalGold,
-            to: 0,
-            duration,
-            ease: 'Sine.easeOut',
-            onUpdate: (tween) => {
-                const currentGold = Math.max(0, Math.round(tween.getValue()));
-                const convertedGold = safeTotalGold - currentGold;
-                let gainedStars = Math.floor(convertedGold / 10);
-
-                if (currentGold === 0 && safeTotalGold % 10 !== 0) {
-                    gainedStars += 1;
-                }
-
-                goldDisplay.setValue(currentGold);
-                starDisplay.setValue(baseStars + gainedStars);
-            },
-            onComplete: () => {
-                goldDisplay.setValue(0);
-                starDisplay.setValue(baseStars + awardedStars);
-                if (onComplete) {
-                    onComplete();
-                }
-            }
-        });
+        return this.widgets.animateGoldToStarsConversion(goldDisplay, starDisplay, totalGold, baseStars, onComplete);
     }
 
     createStoryRewardDisplay(centerX, y, maxWidth, isNarrowViewport, potionDefinition, fragmentDefinition = null) {
-        const container = this.scene.add.container(centerX, y).setDepth(41);
-        container.setVisible(false);
-
-        const rewardDefinition = potionDefinition || fragmentDefinition;
-        if (!rewardDefinition) {
-            return {
-                container,
-                setVisible: (visible) => {
-                    container.setVisible(false);
-                }
-            };
-        }
-
-        const iconSize = isNarrowViewport ? 28 : 34;
-        const icon = this.scene.add.image(-(maxWidth / 2) + (isNarrowViewport ? 22 : 30), 0, rewardDefinition.textureKey)
-            .setOrigin(0.5)
-            .setDisplaySize(iconSize, iconSize);
-        const title = this.scene.add.text(
-            -(maxWidth / 2) + (isNarrowViewport ? 44 : 56),
-            -12,
-            potionDefinition
-                ? TranslationManager.t(`potion.${potionDefinition.id.toLowerCase()}.title`)
-                : TranslationManager.t(fragmentDefinition.titleKey),
-            {
-                fontSize: isNarrowViewport ? '14px' : '17px',
-                fill: '#3b2419',
-                fontFamily: 'Vollkorn',
-                fontStyle: 'bold',
-                wordWrap: { width: maxWidth - (isNarrowViewport ? 54 : 70) }
-            }
-        ).setOrigin(0, 0.5);
-        const desc = this.scene.add.text(
-            -(maxWidth / 2) + (isNarrowViewport ? 44 : 56),
-            12,
-            potionDefinition
-                ? TranslationManager.t(`potion.${potionDefinition.id.toLowerCase()}.desc`)
-                : TranslationManager.t(fragmentDefinition.descKey),
-            {
-                fontSize: isNarrowViewport ? '12px' : '14px',
-                fill: '#5d3b2b',
-                fontFamily: 'Vollkorn',
-                wordWrap: { width: maxWidth - (isNarrowViewport ? 54 : 70) }
-            }
-        ).setOrigin(0, 0.5);
-
-        container.add([icon, title, desc]);
-
-        return {
-            container,
-            setVisible: (visible) => {
-                container.setVisible(visible);
-            }
-        };
+        return this.widgets.createStoryRewardDisplay(centerX, y, maxWidth, isNarrowViewport, potionDefinition, fragmentDefinition);
     }
 
     createBossRushPotionPreview(centerX, y, isNarrowViewport, potions = []) {
-        const container = this.scene.add.container(centerX, y).setDepth(41);
-        container.setVisible(false);
-        const spacing = isNarrowViewport ? 84 : 104;
-        const iconSize = isNarrowViewport ? 38 : 46;
-
-        (potions || []).slice(0, 3).forEach((potion, index) => {
-            const x = (index - 1) * spacing;
-            const icon = this.scene.add.image(x, -10, potion.textureKey)
-                .setOrigin(0.5)
-                .setDisplaySize(iconSize, iconSize);
-            const label = this.scene.add.text(x, isNarrowViewport ? 18 : 24, TranslationManager.t(`potion.${potion.id.toLowerCase()}.title`), {
-                fontSize: isNarrowViewport ? '11px' : '13px',
-                fill: '#5d3b2b',
-                fontFamily: 'Vollkorn',
-                align: 'center',
-                wordWrap: { width: isNarrowViewport ? 76 : 92 }
-            }).setOrigin(0.5, 0);
-            container.add([icon, label]);
-        });
-
-        return {
-            container,
-            setVisible: (visible) => {
-                container.setVisible(visible);
-            }
-        };
+        return this.widgets.createBossRushPotionPreview(centerX, y, isNarrowViewport, potions);
     }
 
     buildEndStatsText() {
@@ -1235,54 +757,7 @@ class GameBoardEndPanel {
     }
 
     createStyledMenuButton(x, y, width, height, label, fontSize = '15px', options = {}) {
-        const leftWidth = 18;
-        const rightWidth = 18;
-        const fillWidth = Math.max(8, width - leftWidth - rightWidth);
-        const fillTint = options.fillTint || null;
-        const fillTintOn = options.fillTintOn || fillTint;
-        const container = this.scene.add.container(x, y).setDepth(42);
-        const left = this.scene.add.image(-width / 2 + leftWidth / 2, 0, 'ui-button-left-off')
-            .setDisplaySize(leftWidth, height)
-            .setOrigin(0.5);
-        const fill = this.scene.add.image(0, 0, 'ui-button-fill-off')
-            .setDisplaySize(fillWidth, height)
-            .setOrigin(0.5);
-        const right = this.scene.add.image(width / 2 - rightWidth / 2, 0, 'ui-button-right-off')
-            .setDisplaySize(rightWidth, height)
-            .setOrigin(0.5);
-        const text = this.scene.add.text(0, 1, label, {
-            fontSize,
-            fill: '#f3e8d2',
-            fontFamily: 'Vollkorn',
-            fontStyle: 'bold',
-            align: 'center'
-        }).setOrigin(0.5);
-        const hitArea = this.scene.add.zone(0, 0, width, height)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-        container.add([left, fill, right, text, hitArea]);
-
-        const setState = (isOn) => {
-            left.setTexture(isOn ? 'ui-button-left-on' : 'ui-button-left-off');
-            fill.setTexture(isOn ? 'ui-button-fill-on' : 'ui-button-fill-off');
-            right.setTexture(isOn ? 'ui-button-right-on' : 'ui-button-right-off');
-            if (fillTint || fillTintOn) {
-                const tintValue = isOn ? (fillTintOn || fillTint) : fillTint;
-                [left, fill, right].forEach((part) => {
-                    if (tintValue) {
-                        part.setTint(tintValue);
-                    } else {
-                        part.clearTint();
-                    }
-                });
-            }
-            text.setColor(isOn ? '#fff8de' : '#f3e8d2');
-        };
-
-        setState(false);
-
-        return { container, hitArea, setState };
+        return this.widgets.createStyledMenuButton(x, y, width, height, label, fontSize, options);
     }
 
     createTrophyScrollArea(centerX, topY, width, height, isNarrowViewport) {

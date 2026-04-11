@@ -7,6 +7,7 @@ class GameBoardAnimations {
     startCaptureAnimation(grid, row, col, fromColor, toColor) {
         const pion = grid[row][col];
         this.stopCaptureAnimation(pion);
+        this.playTileClap();
 
         const offTexture = this.board.getTileAnimationTextureKey(fromColor, 'off');
         const onTexture = this.board.getTileAnimationTextureKey(toColor, 'on');
@@ -92,6 +93,16 @@ class GameBoardAnimations {
         }
 
         pion.captureAnimation = null;
+    }
+
+    playTileClap() {
+        if (!this.scene.cache.audio?.exists('tile-clap')) {
+            return;
+        }
+
+        this.scene.sound.play('tile-clap', {
+            volume: 0.28
+        });
     }
 
     blinkPion(grid, row, col, isBlinking) {

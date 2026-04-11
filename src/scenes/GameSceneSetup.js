@@ -94,6 +94,7 @@ class GameSceneSetup {
         this.scene.load.image('story-fragment-guardian', 'assets/images/fragments/fragment_guardian.png');
         this.scene.load.image('story-fragment-lost', 'assets/images/fragments/fragment_lost.png');
         this.scene.load.image('story-fragment-phoenix', 'assets/images/fragments/fragment_phoenix.png');
+        this.scene.load.audio('tile-clap', 'assets/sounds/clap.mp3');
         this.scene.load.image('bonus-bomb-icon', 'assets/images/bonus/bomb_icon.png');
         this.scene.load.image('bonus-explosion-icon', 'assets/images/bonus/explosion_icon.png');
         this.scene.load.spritesheet('bonus-lightning-tile', 'assets/images/bonus/lightning/tile_lightning.png', {

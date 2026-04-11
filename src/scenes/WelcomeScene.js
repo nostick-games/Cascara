@@ -93,6 +93,8 @@ class WelcomeScene extends Phaser.Scene {
                 ease: 'Sine.easeOut'
             });
         });
+
+        this.createCheatToggle(viewportWidth, viewportHeight, isNarrowViewport);
     }
 
     createLanguageButton(x, y, width, height, label, language) {
@@ -146,5 +148,54 @@ class WelcomeScene extends Phaser.Scene {
         });
 
         return { container, setState };
+    }
+
+    createCheatToggle(viewportWidth, viewportHeight, isNarrowViewport) {
+        const label = this.add.text(
+            viewportWidth - (isNarrowViewport ? 10 : 14),
+            viewportHeight - (isNarrowViewport ? 10 : 14),
+            this.getCheatToggleLabel(),
+            {
+                fontSize: isNarrowViewport ? '11px' : '13px',
+                color: Boolean(globalThis.CASCARA_SHOW_CHEATS) ? '#f0d98a' : '#7f7f7f',
+                fontFamily: 'Vollkorn',
+                fontStyle: '700',
+                backgroundColor: '#000000'
+            }
+        )
+            .setOrigin(1, 1)
+            .setAlpha(0.72)
+            .setDepth(8)
+            .setPadding(6, 3, 6, 3)
+            .setInteractive({ useHandCursor: true });
+
+        label.on('pointerover', () => {
+            label.setAlpha(1);
+        });
+
+        label.on('pointerout', () => {
+            label.setAlpha(0.72);
+        });
+
+        label.on('pointerdown', () => {
+            const nextValue = !Boolean(globalThis.CASCARA_SHOW_CHEATS);
+            globalThis.CASCARA_SHOW_CHEATS = nextValue;
+
+            try {
+                localStorage.setItem('cascara_show_cheats', String(nextValue));
+            } catch (error) {
+                // Keep the runtime toggle even if persistence is unavailable.
+            }
+
+            label.setText(this.getCheatToggleLabel());
+            label.setColor(nextValue ? '#f0d98a' : '#7f7f7f');
+            label.setAlpha(1);
+        });
+    }
+
+    getCheatToggleLabel() {
+        return Boolean(globalThis.CASCARA_SHOW_CHEATS)
+            ? TranslationManager.t('welcome.cheats_on')
+            : TranslationManager.t('welcome.cheats_off');
     }
 }

@@ -3,6 +3,8 @@ class TranslationManager {
         fr: {
             'welcome.english': 'ENGLISH',
             'welcome.french': 'FRANÇAIS',
+            'welcome.cheats_on': 'Cheats : ON',
+            'welcome.cheats_off': 'Cheats : OFF',
             'menu.story': 'Le cristal de Cascara',
             'menu.story_desc': 'Une aventure épique vous attend !',
             'menu.arcade': 'Mode arcade',
@@ -441,6 +443,8 @@ class TranslationManager {
         en: {
             'welcome.english': 'ENGLISH',
             'welcome.french': 'FRANÇAIS',
+            'welcome.cheats_on': 'Cheats: ON',
+            'welcome.cheats_off': 'Cheats: OFF',
             'menu.story': 'The Crystal of Cascara',
             'menu.story_desc': 'An epic adventure awaits you!',
             'menu.arcade': 'Arcade mode',
