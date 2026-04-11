@@ -16,8 +16,8 @@ class StrategoScene extends Phaser.Scene {
         this.load.image('ui-button-left-on', 'assets/images/UI/bouton_bord_gauche_on.png');
         this.load.image('ui-button-fill-on', 'assets/images/UI/bouton_fond_on.png');
         this.load.image('ui-button-right-on', 'assets/images/UI/bouton_bord_droite_on.png');
-        this.load.image('stratego-tile-red', 'assets/images/tiles/red.png');
-        this.load.image('stratego-tile-grey', 'assets/images/tiles/grey.png');
+        this.load.image('stratego-tile-red', 'assets/images/tiles/tile_red.png');
+        this.load.image('stratego-tile-grey', 'assets/images/tiles/tile_grey.png');
         this.load.image('arcade-kingdom-verdombre', 'assets/images/astrolabe/verdombre.png');
         this.load.image('arcade-kingdom-vulkarn', 'assets/images/astrolabe/Vulkarn.png');
         this.load.image('arcade-kingdom-drazhul', 'assets/images/astrolabe/drazhul.png');
