@@ -84,7 +84,7 @@ class GameSceneSetup {
         this.scene.load.image('ui-button-left-on', 'assets/images/UI/bouton_bord_gauche_on.png');
         this.scene.load.image('ui-button-fill-on', 'assets/images/UI/bouton_fond_on.png');
         this.scene.load.image('ui-button-right-on', 'assets/images/UI/bouton_bord_droite_on.png');
-        this.scene.load.image('story-gold', 'assets/images/Story/gold.png');
+        this.scene.load.image('story-gold', 'assets/images/story/gold.png');
         this.scene.load.image('meta-star', 'assets/images/bonus/star.png');
         this.scene.load.image('story-fragment-initiative', 'assets/images/fragments/fragment_initiative.png');
         this.scene.load.image('story-fragment-ambition', 'assets/images/fragments/fragment_ambition.png');

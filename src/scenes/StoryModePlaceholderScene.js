@@ -42,12 +42,12 @@ class StoryModePlaceholderScene extends Phaser.Scene {
         this.load.image('ui-button-left-on', 'assets/images/UI/bouton_bord_gauche_on.png');
         this.load.image('ui-button-fill-on', 'assets/images/UI/bouton_fond_on.png');
         this.load.image('ui-button-right-on', 'assets/images/UI/bouton_bord_droite_on.png');
-        this.load.image('story-node-fight', 'assets/images/Story/icon_fight.png');
-        this.load.image('story-node-merchant', 'assets/images/Story/icon_merchant.png');
-        this.load.image('story-node-elite', 'assets/images/Story/icon_elite.png');
-        this.load.image('story-node-boss', 'assets/images/Story/icon_boss.png');
-        this.load.image('story-node-surprise', 'assets/images/Story/icon_surprise.png');
-        this.load.image('story-gold', 'assets/images/Story/gold.png');
+        this.load.image('story-node-fight', 'assets/images/story/icon_fight.png');
+        this.load.image('story-node-merchant', 'assets/images/story/icon_merchant.png');
+        this.load.image('story-node-elite', 'assets/images/story/icon_elite.png');
+        this.load.image('story-node-boss', 'assets/images/story/icon_boss.png');
+        this.load.image('story-node-surprise', 'assets/images/story/icon_surprise.png');
+        this.load.image('story-gold', 'assets/images/story/gold.png');
         this.load.image('story-potion-rose', 'assets/images/bonus/potion_rose.png');
         this.load.image('story-potion-orange', 'assets/images/bonus/potion_orange.png');
         this.load.image('story-potion-menthe', 'assets/images/bonus/potion_menthe.png');

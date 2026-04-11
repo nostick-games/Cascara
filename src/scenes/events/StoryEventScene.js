@@ -28,7 +28,7 @@ class StoryEventScene extends Phaser.Scene {
         this.load.image('ui-button-fill-on', 'assets/images/UI/bouton_fond_on.png');
         this.load.image('ui-button-right-on', 'assets/images/UI/bouton_bord_droite_on.png');
         this.load.image('merchant-banner', 'assets/images/fragments/banniere_boutique.png');
-        this.load.image('story-gold', 'assets/images/Story/gold.png');
+        this.load.image('story-gold', 'assets/images/story/gold.png');
     }
 
     create() {
