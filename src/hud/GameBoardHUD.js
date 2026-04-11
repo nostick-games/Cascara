@@ -14,6 +14,7 @@ class GameBoardHUD {
     createUI() {
         this.board.enemyDeathPlayed = false;
         this.board.heroDeathPlayed = false;
+        const showCheats = Boolean(globalThis.CASCARA_SHOW_CHEATS);
         this.board.gaugeGraphics = this.scene.add.graphics();
         this.board.gaugeGraphics.setDepth(14);
         this.board.gaugeGraphics.clear();
@@ -21,7 +22,7 @@ class GameBoardHUD {
         this.createTurnIndicator();
         this.createLightningGauges();
         this.modeHud.createFightHealthBars();
-        if (!this.scene.isFightMode) {
+        if (showCheats && !this.scene.isFightMode) {
             this.createPotionCheatPanel();
         }
         this.createHeroSprite();

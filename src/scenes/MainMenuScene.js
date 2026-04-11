@@ -25,6 +25,7 @@ class MainMenuScene extends Phaser.Scene {
         const viewportHeight = this.scale.height || 700;
         const centerX = viewportWidth / 2;
         const isNarrowViewport = viewportWidth < 500;
+        const showCheats = Boolean(globalThis.CASCARA_SHOW_CHEATS);
         const scrollContent = this.add.container(0, 0);
         const titleY = isNarrowViewport ? 24 : 36;
         const buttonWidth = isNarrowViewport ? 250 : 300;
@@ -86,7 +87,7 @@ class MainMenuScene extends Phaser.Scene {
                 descKey: null,
                 action: () => this.scene.start('TrophiesScene', { language: TranslationManager.getLanguage() })
             },
-            {
+            ...(showCheats ? [{
                 titleKey: 'menu.fragments_cheat',
                 descKey: 'menu.fragments_cheat_desc',
                 action: () => this.scene.start('StoryModePlaceholderScene', {
@@ -124,7 +125,7 @@ class MainMenuScene extends Phaser.Scene {
                 action: () => this.scene.start('TileAnimationTestScene', {
                     language: TranslationManager.getLanguage()
                 })
-            }
+            }] : [])
         ];
 
         menuItems.forEach((item) => {
