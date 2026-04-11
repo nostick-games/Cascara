@@ -4,7 +4,7 @@ class MetaProgression {
 
     static getDefaultState() {
         return {
-            stars: 999,
+            stars: 0,
             welcomeStarsGranted: false,
             astralFavorMerchantIntroSeen: false,
             luckyStarEventIntroSeen: false,
@@ -85,6 +85,14 @@ class MetaProgression {
         }
 
         state.stars = Math.max(0, Math.floor(state.stars || 0)) + MetaProgression.WELCOME_STARS;
+        state.welcomeStarsGranted = true;
+        MetaProgression.save(state);
+        return state.stars;
+    }
+
+    static grantCheatStars() {
+        const state = MetaProgression.ensureInitialized();
+        state.stars = 999;
         state.welcomeStarsGranted = true;
         MetaProgression.save(state);
         return state.stars;

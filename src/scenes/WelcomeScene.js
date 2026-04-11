@@ -181,6 +181,10 @@ class WelcomeScene extends Phaser.Scene {
             const nextValue = !Boolean(globalThis.CASCARA_SHOW_CHEATS);
             globalThis.CASCARA_SHOW_CHEATS = nextValue;
 
+            if (nextValue) {
+                MetaProgression.grantCheatStars();
+            }
+
             try {
                 localStorage.setItem('cascara_show_cheats', String(nextValue));
             } catch (error) {
