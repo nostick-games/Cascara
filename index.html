@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>CASCARA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vollkorn:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+    <style>
+        html,
+        body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Vollkorn', serif; 
+            background-color: #1a1a2e;
+        }
+        canvas { 
+            display: block; 
+            margin: auto; 
+        }
+    </style>
+</head>
+<body>
+    <script src="src/core/I18n.js"></script>
+    <script src="src/core/MetaProgression.js"></script>
+    <script src="src/core/TrophyDefinitions.js"></script>
+    <script src="src/core/TrophyManager.js"></script>
+    <script src="src/core/StrategoPuzzleGenerator.js"></script>
+    <script src="src/core/GameRules.js"></script>
+    <script src="src/core/GameMoveEvaluator.js"></script>
+    <script src="src/core/GameGridFactory.js"></script>
+    <script src="src/core/StoryEncounterFactory.js"></script>
+    <script src="src/core/StoryFragmentCatalog.js"></script>
+    <script src="src/core/StoryFragmentInventory.js"></script>
+    <script src="src/core/AstrolabeCatalog.js"></script>
+    <script src="src/core/ArcadeKingdomCatalog.js"></script>
+    <script src="src/core/BossBlessingCatalog.js"></script>
+    <script src="src/core/ProgressPotionCatalog.js"></script>
+    <script src="src/core/VerticalScrollHelper.js"></script>
+    <script src="src/core/CenteredPromptModal.js"></script>
+    <script src="src/ai/EnemyDefinitions.js"></script>
+    <script src="src/ai/AIBehaviors.js"></script>
+    <script src="src/core/GameLogic.js"></script>
+    <script src="src/ai/AICandidateBuilder.js"></script>
+    <script src="src/ai/AIPlayer.js"></script>
+    <script src="src/core/CascadeAnimation.js"></script>
+    <script src="src/flow/ThoughtSequenceController.js"></script>
+    <script src="src/flow/ProgressPotionFlow.js"></script>
+    <script src="src/flow/EnemyIntentFlow.js"></script>
+    <script src="src/flow/BonusFlow.js"></script>
+    <script src="src/flow/BattleRoyaleFlow.js"></script>
+    <script src="src/flow/FightTurnFlow.js"></script>
+    <script src="src/flow/TurnResolutionFlow.js"></script>
+    <script src="src/hud/GameBoardGoalGauge.js"></script>
+    <script src="src/hud/GameBoardCharacterHUD.js"></script>
+    <script src="src/hud/GameBoardBonusGauges.js"></script>
+    <script src="src/hud/GameBoardModeHUD.js"></script>
+    <script src="src/hud/GameBoardCheatPanel.js"></script>
+    <script src="src/hud/GameBoardTrophyNotifications.js"></script>
+    <script src="src/hud/GameBoardEndStatsView.js"></script>
+    <script src="src/hud/GameBoardEndTrophiesView.js"></script>
+    <script src="src/hud/GameBoardEndPanel.js"></script>
+    <script src="src/hud/GameBoardHUD.js"></script>
+    <script src="src/board/GameBoardEffects.js"></script>
+    <script src="src/board/GameBoardAnimations.js"></script>
+    <script src="src/board/GameBoardOverlays.js"></script>
+    <script src="src/flow/PotionModeController.js"></script>
+    <script src="src/flow/EndScreenMonochromeController.js"></script>
+    <script src="src/board/GameBoardRenderer.js"></script>
+    <script src="src/board/GameBoardInteraction.js"></script>
+    <script src="src/board/GameBoard.js"></script>
+    <script src="src/scenes/WelcomeScene.js"></script>
+    <script src="src/scenes/MainMenuScene.js"></script>
+    <script src="src/scenes/AstrolabeScene.js"></script>
+    <script src="src/scenes/StrategoScene.js"></script>
+    <script src="src/scenes/FighterSceneUiHelper.js"></script>
+    <script src="src/scenes/FighterScene.js"></script>
+    <script src="src/scenes/BossRushScene.js"></script>
+    <script src="src/scenes/TileAnimationTestScene.js"></script>
+    <script src="src/scenes/StoryMapState.js"></script>
+    <script src="src/scenes/StoryMapRenderer.js"></script>
+    <script src="src/scenes/StoryMerchantState.js"></script>
+    <script src="src/scenes/StoryMerchantRenderer.js"></script>
+    <script src="src/scenes/events/StoryEventRewardHelper.js"></script>
+    <script src="src/scenes/events/StoryEventDirtySword.js"></script>
+    <script src="src/scenes/events/StoryEventAnnoyingMerchant.js"></script>
+    <script src="src/scenes/events/StoryEventGnomeGambler.js"></script>
+    <script src="src/scenes/events/StoryEventWetBeaverInn.js"></script>
+    <script src="src/scenes/events/StoryEventStoneCircle.js"></script>
+    <script src="src/scenes/events/StoryEventGoblinDie.js"></script>
+    <script src="src/scenes/events/StoryEventRegistry.js"></script>
+    <script src="src/scenes/events/StoryEventState.js"></script>
+    <script src="src/scenes/events/StoryEventScene.js"></script>
+    <script src="src/scenes/BriefingRenderer.js"></script>
+    <script src="src/scenes/BriefingBattleTransition.js"></script>
+    <script src="src/scenes/BriefingStoryContextHelper.js"></script>
+    <script src="src/scenes/BriefingBossBlessingCarousel.js"></script>
+    <script src="src/scenes/BriefingArcadeKingdomCarousel.js"></script>
+    <script src="src/scenes/BriefingFragmentCarousel.js"></script>
+    <script src="src/scenes/StoryIntroScene.js"></script>
+    <script src="src/scenes/StoryModePlaceholderScene.js"></script>
+    <script src="src/scenes/StoryMerchantScene.js"></script>
+    <script src="src/scenes/HowToPlayScene.js"></script>
+    <script src="src/scenes/TrophiesScene.js"></script>
+    <script src="src/scenes/IntroScene.js"></script>
+    <script src="src/scenes/BriefingScene.js"></script>
+    <script src="src/scenes/GameSceneModeHelper.js"></script>
+    <script src="src/scenes/GameSceneOutcomeHelper.js"></script>
+    <script src="src/scenes/GameSceneSetup.js"></script>
+    <script src="src/flow/GameSceneFlow.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
