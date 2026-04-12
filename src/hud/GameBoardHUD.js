@@ -95,6 +95,10 @@ class GameBoardHUD {
         this.bonusGauges.animateLightningGauge(color, targetCharge, onComplete);
     }
 
+    animateChaosGaugeDrain(color, onComplete = null) {
+        this.bonusGauges.animateGaugeDrain(color, onComplete);
+    }
+
     renderLightningGauge(color, chargeValue) {
         this.bonusGauges.renderLightningGauge(color, chargeValue);
     }

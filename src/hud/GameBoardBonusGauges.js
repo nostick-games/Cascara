@@ -55,6 +55,7 @@ class GameBoardBonusGauges {
                 baseRadius: radius,
                 gaugeScale: 1,
                 lastAvailableBonus: null,
+                drainActive: false,
                 rouletteActive: false,
                 rouletteTargetBonus: null,
                 rouletteStrip: null,
@@ -93,6 +94,22 @@ class GameBoardBonusGauges {
                     hitArea.input.enabled = false;
                 }
                 state.lastAvailableBonus = null;
+                return;
+            }
+
+            if (state.drainActive) {
+                if (bonusText) {
+                    bonusText.setVisible(false);
+                    bonusText.setAlpha(0);
+                }
+                if (bonusImage) {
+                    bonusImage.setVisible(false);
+                    bonusImage.setAlpha(0);
+                }
+                if (hitArea) {
+                    hitArea.setVisible(false);
+                    hitArea.input.enabled = false;
+                }
                 return;
             }
 
@@ -161,43 +178,10 @@ class GameBoardBonusGauges {
 
         const tweenState = { value: currentCharge };
 
-        if (targetCharge < currentCharge) {
-            this.board.lightningGaugeTweens[color] = this.scene.tweens.add({
-                targets: tweenState,
-                value: 100,
-                duration: 260,
-                ease: 'Cubic.easeOut',
-                onUpdate: () => {
-                    this.renderLightningGauge(color, tweenState.value);
-                },
-                onComplete: () => {
-                    this.board.displayedLightningCharge[color] = 0;
-                    this.renderLightningGauge(color, 0);
-
-                    const resetState = { value: 0 };
-                    this.board.lightningGaugeTweens[color] = this.scene.tweens.add({
-                        targets: resetState,
-                        value: targetCharge,
-                        duration: Math.max(180, targetCharge * 6),
-                        ease: 'Sine.easeOut',
-                        onUpdate: () => {
-                            this.renderLightningGauge(color, resetState.value);
-                        },
-                        onComplete: () => {
-                            this.board.displayedLightningCharge[color] = targetCharge;
-                            this.board.lightningGaugeTweens[color] = null;
-                            if (onComplete) onComplete();
-                        }
-                    });
-                }
-            });
-            return;
-        }
-
         this.board.lightningGaugeTweens[color] = this.scene.tweens.add({
             targets: tweenState,
             value: targetCharge,
-            duration: Math.max(180, Math.abs(targetCharge - currentCharge) * 7),
+            duration: Math.max(220, Math.abs(targetCharge - currentCharge) * 8),
             ease: 'Sine.easeOut',
             onUpdate: () => {
                 this.renderLightningGauge(color, tweenState.value);
@@ -217,7 +201,7 @@ class GameBoardBonusGauges {
         const progress = Math.max(0, Math.min(1, chargeValue / 100));
         const state = this.getBonusGaugeState(color);
         const { graphics, x, y, radius } = gauge;
-        const hasAvailableBonus = Boolean(this.scene.gameState.availableBonuses?.[color]);
+        const hasAvailableBonus = Boolean(this.scene.gameState.availableBonuses?.[color]) && !state.drainActive;
         const gaugeColor = this.board.BONUS_GAUGE_COLORS?.[color] || this.board.COLORS[color];
         const gaugeScale = state?.gaugeScale || 1;
         const scaledRadius = radius * gaugeScale;
@@ -286,6 +270,7 @@ class GameBoardBonusGauges {
                 baseRadius: radius,
                 gaugeScale: 1,
                 lastAvailableBonus: null,
+                drainActive: false,
                 rouletteActive: false,
                 rouletteTargetBonus: null,
                 rouletteStrip: null,
@@ -393,6 +378,23 @@ class GameBoardBonusGauges {
         }
         this.syncBonusDisplay(color, this.scene.gameState.availableBonuses?.[color] || null);
         this.renderLightningGauge(color, this.board.displayedLightningCharge[color] || 0);
+    }
+
+    animateGaugeDrain(color, onComplete = null) {
+        const state = this.getBonusGaugeState(color);
+        const currentCharge = this.board.displayedLightningCharge[color] || 100;
+
+        this.clearBonusRoulette(color);
+        state.drainActive = true;
+        this.board.displayedLightningCharge[color] = Math.max(100, currentCharge);
+        this.renderLightningGauge(color, this.board.displayedLightningCharge[color]);
+
+        this.animateLightningGauge(color, 0, () => {
+            state.drainActive = false;
+            this.board.displayedLightningCharge[color] = 0;
+            this.renderLightningGauge(color, 0);
+            if (onComplete) onComplete();
+        });
     }
 
     startBonusRoulette(color, selectedBonus) {

@@ -30,6 +30,13 @@ class BonusFlow {
         });
     }
 
+    playChaosGaugeDrain(playerColor, onComplete) {
+        this.scene.gameState.specialActionInProgress = true;
+        this.scene.gameBoard.animateChaosGaugeDrain(playerColor, () => {
+            if (onComplete) onComplete();
+        });
+    }
+
     applyLightningCharge(playerColor, convertedCount, specialActivationCount = 0) {
         if (!playerColor || (convertedCount <= 0 && specialActivationCount <= 0)) return;
 
@@ -145,6 +152,13 @@ class BonusFlow {
     }
 
     consumePlaceBomb(row, col, playerColor) {
+        this.playChaosGaugeDrain(playerColor, () => {
+            this.consumePlaceBombNow(row, col, playerColor);
+        });
+        return true;
+    }
+
+    consumePlaceBombNow(row, col, playerColor) {
         const placedCell = this.scene.gameLogic.placeOwnedSuperBombCell(
             this.scene.gameState.grid,
             row,
@@ -152,6 +166,8 @@ class BonusFlow {
             playerColor
         );
         if (!placedCell) {
+            this.scene.gameState.specialActionInProgress = false;
+            this.flow.updateUI();
             return false;
         }
 
@@ -169,6 +185,13 @@ class BonusFlow {
     }
 
     consumeRandomBonus(playerColor, bonusType) {
+        this.playChaosGaugeDrain(playerColor, () => {
+            this.consumeRandomBonusNow(playerColor, bonusType);
+        });
+        return true;
+    }
+
+    consumeRandomBonusNow(playerColor, bonusType) {
         let didSpawn = false;
 
         switch (bonusType) {
@@ -204,6 +227,8 @@ class BonusFlow {
         }
 
         if (!didSpawn) {
+            this.scene.gameState.specialActionInProgress = false;
+            this.flow.updateUI();
             return false;
         }
 

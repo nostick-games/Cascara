@@ -435,6 +435,10 @@ class GameBoard {
         this.hud.animateLightningGauge(color, targetCharge, onComplete);
     }
 
+    animateChaosGaugeDrain(color, onComplete = null) {
+        this.hud.animateChaosGaugeDrain(color, onComplete);
+    }
+
     renderLightningGauge(color, chargeValue) {
         this.hud.renderLightningGauge(color, chargeValue);
     }
