@@ -118,6 +118,28 @@ class HowToPlayScene extends Phaser.Scene {
         content.add(intro);
         currentY += intro.height + (isNarrowViewport ? 18 : 22);
 
+        const tutorialButton = StoryMerchantRenderer.createUiTextButton(
+            this,
+            contentWidth / 2,
+            currentY + 21,
+            isNarrowViewport ? 196 : 218,
+            42,
+            TranslationManager.t('how_to_play.try_tutorial'),
+            isNarrowViewport ? '18px' : '20px'
+        );
+        tutorialButton.hitArea.on('pointerover', () => tutorialButton.setState(true));
+        tutorialButton.hitArea.on('pointerout', () => tutorialButton.setState(false));
+        tutorialButton.hitArea.on('pointerdown', () => {
+            tutorialButton.setState(true);
+            this.scene.start('TutorialScene', {
+                language: TranslationManager.getLanguage(),
+                returnSceneKey: 'HowToPlayScene',
+                returnSceneData: { language: TranslationManager.getLanguage() }
+            });
+        });
+        content.add(tutorialButton.container);
+        currentY += 56;
+
         const sections = [
             { titleKey: 'how_to_play.section.gameplay.title', bodyKey: 'how_to_play.section.gameplay.body' },
             { titleKey: 'how_to_play.section.chaos.title', bodyKey: 'how_to_play.section.chaos.body' },

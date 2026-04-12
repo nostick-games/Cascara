@@ -125,6 +125,13 @@ class MainMenuScene extends Phaser.Scene {
                 action: () => this.scene.start('TileAnimationTestScene', {
                     language: TranslationManager.getLanguage()
                 })
+            },
+            {
+                titleKey: 'menu.tutorial_test',
+                descKey: 'menu.tutorial_test_desc',
+                action: () => this.scene.start('TutorialScene', {
+                    language: TranslationManager.getLanguage()
+                })
             }] : [])
         ];
 

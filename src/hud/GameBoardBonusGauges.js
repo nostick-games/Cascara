@@ -30,20 +30,26 @@ class GameBoardBonusGauges {
                 fontFamily: 'Vollkorn',
                 align: 'center',
                 lineSpacing: -2
-            }).setOrigin(0.5).setDepth(13);
+            }).setOrigin(0.5).setDepth(13)
+                .setInteractive({ useHandCursor: true });
             const bonusImage = this.scene.add.image(gaugeX, y, 'bonus-ice-icon')
                 .setOrigin(0.5)
                 .setDisplaySize(isNarrowViewport ? 26 : 30, isNarrowViewport ? 26 : 30)
                 .setVisible(false)
-                .setDepth(13);
+                .setDepth(13)
+                .setInteractive({ useHandCursor: true });
             const hitArea = this.scene.add.zone(gaugeX, y, hitAreaSize, hitAreaSize)
                 .setOrigin(0.5)
                 .setInteractive({ useHandCursor: true })
                 .setDepth(14);
 
-            hitArea.on('pointerdown', () => {
+            const handleBonusPointerDown = () => {
                 this.scene.handleBonusClick(color);
-            });
+            };
+
+            hitArea.on('pointerdown', handleBonusPointerDown);
+            bonusIcon.on('pointerdown', handleBonusPointerDown);
+            bonusImage.on('pointerdown', handleBonusPointerDown);
 
             this.board.lightningGaugeGraphics[color] = { graphics, x: gaugeX, y, radius };
             this.board.bonusIconTexts[color] = bonusIcon;
@@ -138,15 +144,7 @@ class GameBoardBonusGauges {
                 this.refreshRouletteMask(color);
             }
 
-            if (hitArea) {
-                hitArea.setVisible(Boolean(availableBonus) && !state.rouletteActive);
-                hitArea.input.enabled = color === 'ROUGE' &&
-                    this.scene.gameState.currentPlayer === 'ROUGE' &&
-                    !this.scene.gameState.gameOver &&
-                    !this.scene.gameState.cascadeActive &&
-                    !state.rouletteActive &&
-                    Boolean(availableBonus);
-            }
+            this.refreshBonusHitArea(color, availableBonus);
 
             const targetCharge = Math.max(0, Math.min(100, lightningCharge[color] || 0));
             this.animateLightningGauge(color, targetCharge);
@@ -377,6 +375,7 @@ class GameBoardBonusGauges {
             this.scene.gameState.specialActionInProgress = false;
         }
         this.syncBonusDisplay(color, this.scene.gameState.availableBonuses?.[color] || null);
+        this.refreshBonusHitArea(color, this.scene.gameState.availableBonuses?.[color] || null);
         this.renderLightningGauge(color, this.board.displayedLightningCharge[color] || 0);
     }
 
@@ -393,6 +392,7 @@ class GameBoardBonusGauges {
             state.drainActive = false;
             this.board.displayedLightningCharge[color] = 0;
             this.renderLightningGauge(color, 0);
+            this.refreshBonusHitArea(color, this.scene.gameState.availableBonuses?.[color] || null);
             if (onComplete) onComplete();
         });
     }
@@ -494,6 +494,7 @@ class GameBoardBonusGauges {
                                 this.syncBonusDisplay(color, selectedBonus);
                                 this.renderLightningGauge(color, this.board.displayedLightningCharge[color] || 0);
                                 this.scene.gameState.specialActionInProgress = false;
+                                this.refreshBonusHitArea(color, selectedBonus);
                             }
                         });
                         state.rouletteTweens.push(settleTween);
@@ -550,5 +551,36 @@ class GameBoardBonusGauges {
 
     hasActiveChaosRoulette() {
         return Object.values(this.board.bonusGaugeStates || {}).some((state) => state?.rouletteActive);
+    }
+
+    refreshBonusHitArea(color, availableBonus = null) {
+        const hitArea = this.board.bonusHitAreas?.[color];
+        const bonusText = this.board.bonusIconTexts?.[color];
+        const bonusImage = this.board.bonusIconImages?.[color];
+        if (!hitArea) {
+            return;
+        }
+
+        const state = this.getBonusGaugeState(color);
+        const bonus = availableBonus ?? this.scene.gameState.availableBonuses?.[color] ?? null;
+        const isEnabled = color === 'ROUGE' &&
+            this.scene.gameState.currentPlayer === 'ROUGE' &&
+            !this.scene.gameState.gameOver &&
+            !this.scene.gameState.cascadeActive &&
+            !this.scene.gameState.specialActionInProgress &&
+            !state.drainActive &&
+            !state.rouletteActive &&
+            Boolean(bonus);
+
+        hitArea.setVisible(Boolean(bonus) && !state.rouletteActive && !state.drainActive);
+        if (hitArea.input) {
+            hitArea.input.enabled = isEnabled;
+        }
+        if (bonusText?.input) {
+            bonusText.input.enabled = isEnabled;
+        }
+        if (bonusImage?.input) {
+            bonusImage.input.enabled = isEnabled;
+        }
     }
 }

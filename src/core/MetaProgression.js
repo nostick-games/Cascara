@@ -6,6 +6,7 @@ class MetaProgression {
         return {
             stars: 0,
             welcomeStarsGranted: false,
+            tutorialPromptShown: false,
             astralFavorMerchantIntroSeen: false,
             luckyStarEventIntroSeen: false,
             astrolabePurchases: {},
@@ -96,6 +97,20 @@ class MetaProgression {
         state.welcomeStarsGranted = true;
         MetaProgression.save(state);
         return state.stars;
+    }
+
+    static shouldPromptTutorialFirstGame() {
+        const state = MetaProgression.ensureInitialized();
+        return !Boolean(state.tutorialPromptShown);
+    }
+
+    static markTutorialPromptShown() {
+        const state = MetaProgression.ensureInitialized();
+        if (state.tutorialPromptShown) {
+            return;
+        }
+        state.tutorialPromptShown = true;
+        MetaProgression.save(state);
     }
 
     static shouldShowAstralFavorMerchantIntro() {

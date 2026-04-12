@@ -30,6 +30,7 @@ const config = {
         FighterScene,
         BossRushScene,
         TileAnimationTestScene,
+        TutorialScene,
         StoryIntroScene,
         StoryModePlaceholderScene,
         StoryMerchantScene,

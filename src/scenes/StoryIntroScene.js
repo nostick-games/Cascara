@@ -7,7 +7,9 @@ class StoryIntroScene extends Phaser.Scene {
         if (data?.language) {
             TranslationManager.setLanguage(data.language);
         }
-        this.startingFragments = StoryFragmentCatalog.getRandomSelection(3);
+        this.startingFragments = Array.isArray(data?.startingFragments) && data.startingFragments.length
+            ? data.startingFragments.map((fragment) => ({ ...fragment }))
+            : StoryFragmentCatalog.getRandomSelection(3);
     }
 
     preload() {
@@ -112,7 +114,7 @@ class StoryIntroScene extends Phaser.Scene {
         adventureButton.hitArea.on('pointerout', () => adventureButton.setState(false));
         adventureButton.hitArea.on('pointerdown', () => {
             adventureButton.setState(true);
-            this.scene.start('StoryModePlaceholderScene', {
+            const startAdventure = () => this.scene.start('StoryModePlaceholderScene', {
                 language: TranslationManager.getLanguage(),
                 initialStoryFragmentIds: this.startingFragments.map((fragment) => fragment.id),
                 initialStoryFragments: this.startingFragments.reduce((accumulator, fragment) => {
@@ -120,6 +122,30 @@ class StoryIntroScene extends Phaser.Scene {
                     return accumulator;
                 }, {})
             });
+
+            if (MetaProgression.shouldPromptTutorialFirstGame()) {
+                MetaProgression.markTutorialPromptShown();
+                CenteredPromptModal.showChoice(this, {
+                    depth: 20,
+                    bodyText: TranslationManager.t('tutorial.first_time_prompt'),
+                    onConfirm: () => {
+                        this.scene.start('TutorialScene', {
+                            language: TranslationManager.getLanguage(),
+                            returnSceneKey: 'StoryIntroScene',
+                            returnSceneData: {
+                                language: TranslationManager.getLanguage(),
+                                startingFragments: this.startingFragments.map((fragment) => ({ ...fragment }))
+                            }
+                        });
+                    },
+                    onCancel: () => {
+                        startAdventure();
+                    }
+                });
+                return;
+            }
+
+            startAdventure();
         });
         content.add(adventureButton.container);
         queueAnimatedBlock(adventureButton.container);

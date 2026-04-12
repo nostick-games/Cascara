@@ -8,6 +8,8 @@ class FighterScene extends Phaser.Scene {
         if (data?.language) {
             TranslationManager.setLanguage(data.language);
         }
+        this.initialSelectedEnemyIndex = Number.isInteger(data?.selectedEnemyIndex) ? data.selectedEnemyIndex : 0;
+        this.initialSelectedKingdomIndex = Number.isInteger(data?.selectedKingdomIndex) ? data.selectedKingdomIndex : 0;
     }
 
     preload() {
@@ -40,8 +42,8 @@ class FighterScene extends Phaser.Scene {
         const availableEnemies = this.ui.getAvailableEnemies();
         const availableArcadeKingdoms = ArcadeKingdomCatalog.getUnlockedForArcade();
         const shouldShowKingdomCarousel = availableArcadeKingdoms.length > 1;
-        let selectedEnemyIndex = 0;
-        let selectedKingdomIndex = 0;
+        let selectedEnemyIndex = Math.max(0, Math.min(this.initialSelectedEnemyIndex, Math.max(0, availableEnemies.length - 1)));
+        let selectedKingdomIndex = Math.max(0, Math.min(this.initialSelectedKingdomIndex, Math.max(0, availableArcadeKingdoms.length - 1)));
 
         this.cameras.main.setBackgroundColor('#060606');
 

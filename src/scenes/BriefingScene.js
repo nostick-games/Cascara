@@ -297,6 +297,30 @@ class BriefingScene extends Phaser.Scene {
             return;
         }
 
+        const shouldPromptTutorial = !this.storyContext && MetaProgression.shouldPromptTutorialFirstGame();
+        if (shouldPromptTutorial) {
+            MetaProgression.markTutorialPromptShown();
+            CenteredPromptModal.showChoice(this, {
+                depth: 20,
+                bodyText: TranslationManager.t('tutorial.first_time_prompt'),
+                onConfirm: () => {
+                    this.scene.start('TutorialScene', {
+                        language: TranslationManager.getLanguage(),
+                        returnSceneKey: 'BriefingScene',
+                        returnSceneData: this.buildBriefingReturnPayload()
+                    });
+                },
+                onCancel: () => {
+                    this.startCombatFromBriefing(goButton);
+                }
+            });
+            return;
+        }
+
+        this.startCombatFromBriefing(goButton);
+    }
+
+    startCombatFromBriefing(goButton) {
         this.launchingCombat = true;
         goButton.setState(true);
         goButton.hitArea.disableInteractive();
@@ -326,6 +350,21 @@ class BriefingScene extends Phaser.Scene {
             storyNodeType: this.storyNodeType,
             storyContext: this.buildStoryContextForGame(),
             storyGoldReward: this.storyGoldReward
+        };
+    }
+
+    buildBriefingReturnPayload() {
+        return {
+            aiCount: this.aiCount,
+            boardSize: this.boardSize,
+            difficulty: this.difficulty,
+            language: TranslationManager.getLanguage(),
+            enemyAssignments: JSON.parse(JSON.stringify(this.enemyAssignments || {})),
+            progressPotions: (this.progressPotions || []).map((potion) => ({ ...potion })),
+            storyContext: this.storyContext ? JSON.parse(JSON.stringify(this.storyContext)) : null,
+            storyNodeType: this.storyNodeType,
+            storyGoldReward: this.storyGoldReward,
+            arcadeKingdomId: this.arcadeKingdomId
         };
     }
 

@@ -165,4 +165,108 @@ class CenteredPromptModal {
 
         return { container, hitArea, setState };
     }
+
+    static showChoice(scene, options = {}) {
+        const viewportWidth = scene.scale.width || 800;
+        const viewportHeight = scene.scale.height || 700;
+        const centerX = viewportWidth / 2;
+        const centerY = viewportHeight / 2;
+        const isNarrowViewport = viewportWidth < 500;
+        const panelWidth = options.width || (isNarrowViewport ? 300 : 388);
+        const panelHeight = options.height || (isNarrowViewport ? 224 : 244);
+        const overlayAlpha = options.overlayAlpha ?? 0.62;
+        const depth = options.depth ?? 40;
+        const bodyText = options.bodyText || '';
+        const onConfirm = typeof options.onConfirm === 'function' ? options.onConfirm : null;
+        const onCancel = typeof options.onCancel === 'function' ? options.onCancel : null;
+
+        const overlay = scene.add.container(0, 0).setDepth(depth);
+        const blocker = scene.add.rectangle(centerX, centerY, viewportWidth, viewportHeight, 0x000000, overlayAlpha)
+            .setInteractive();
+        const panel = scene.add.container(centerX, centerY).setAlpha(0);
+        const background = scene.add.rectangle(0, 0, panelWidth, panelHeight, 0xc86a20, 0.96)
+            .setOrigin(0.5)
+            .setStrokeStyle(2, 0xf3c37a, 1);
+
+        const body = scene.add.text(0, -28, bodyText, {
+            fontSize: isNarrowViewport ? '17px' : '20px',
+            fill: '#fff6df',
+            fontFamily: 'Vollkorn',
+            align: 'center',
+            wordWrap: { width: panelWidth - 34 }
+        }).setOrigin(0.5);
+
+        const yesButton = this.createActionButton(
+            scene,
+            -(isNarrowViewport ? 64 : 72),
+            panelHeight / 2 - (isNarrowViewport ? 40 : 46),
+            isNarrowViewport ? 96 : 108,
+            40,
+            options.confirmLabel || TranslationManager.t('menu.yes'),
+            isNarrowViewport ? '18px' : '20px'
+        );
+        const noButton = this.createActionButton(
+            scene,
+            isNarrowViewport ? 64 : 72,
+            panelHeight / 2 - (isNarrowViewport ? 40 : 46),
+            isNarrowViewport ? 96 : 108,
+            40,
+            options.cancelLabel || TranslationManager.t('menu.no'),
+            isNarrowViewport ? '18px' : '20px'
+        );
+
+        const closeWith = (callback = null) => {
+            blocker.disableInteractive();
+            scene.time.delayedCall(120, () => {
+                scene.tweens.add({
+                    targets: panel,
+                    alpha: 0,
+                    y: centerY - 14,
+                    duration: 180,
+                    ease: 'Quad.In',
+                    onComplete: () => {
+                        overlay.destroy(true);
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                });
+            });
+        };
+
+        yesButton.hitArea.on('pointerover', () => yesButton.setState(true));
+        yesButton.hitArea.on('pointerout', () => yesButton.setState(false));
+        yesButton.hitArea.on('pointerdown', () => {
+            yesButton.setState(true);
+            closeWith(onConfirm);
+        });
+
+        noButton.hitArea.on('pointerover', () => noButton.setState(true));
+        noButton.hitArea.on('pointerout', () => noButton.setState(false));
+        noButton.hitArea.on('pointerdown', () => {
+            noButton.setState(true);
+            closeWith(onCancel);
+        });
+
+        panel.add([
+            background,
+            body,
+            yesButton.container,
+            noButton.container
+        ]);
+        overlay.add([blocker, panel]);
+
+        scene.tweens.add({
+            targets: panel,
+            alpha: 1,
+            y: centerY + 10,
+            duration: 220,
+            ease: 'Quad.Out',
+            onComplete: () => {
+                panel.setY(centerY);
+            }
+        });
+
+        return { overlay, panel, blocker };
+    }
 }

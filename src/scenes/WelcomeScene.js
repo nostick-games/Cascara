@@ -94,7 +94,7 @@ class WelcomeScene extends Phaser.Scene {
             });
         });
 
-        this.createCheatToggle(viewportWidth, viewportHeight, isNarrowViewport);
+        this.createCheatToggle(centerX, firstButtonY + buttonGap * 2, buttonWidth, isNarrowViewport);
     }
 
     createLanguageButton(x, y, width, height, label, language) {
@@ -150,23 +150,24 @@ class WelcomeScene extends Phaser.Scene {
         return { container, setState };
     }
 
-    createCheatToggle(viewportWidth, viewportHeight, isNarrowViewport) {
+    createCheatToggle(centerX, y, buttonWidth, isNarrowViewport) {
         const label = this.add.text(
-            viewportWidth - (isNarrowViewport ? 10 : 14),
-            viewportHeight - (isNarrowViewport ? 10 : 14),
+            centerX,
+            y,
             this.getCheatToggleLabel(),
             {
-                fontSize: isNarrowViewport ? '11px' : '13px',
+                fontSize: isNarrowViewport ? '13px' : '15px',
                 color: Boolean(globalThis.CASCARA_SHOW_CHEATS) ? '#f0d98a' : '#7f7f7f',
                 fontFamily: 'Vollkorn',
                 fontStyle: '700',
                 backgroundColor: '#000000'
             }
         )
-            .setOrigin(1, 1)
+            .setOrigin(0.5, 0)
             .setAlpha(0.72)
             .setDepth(8)
-            .setPadding(6, 3, 6, 3)
+            .setPadding(8, 4, 8, 4)
+            .setWordWrapWidth(buttonWidth - 24)
             .setInteractive({ useHandCursor: true });
 
         label.on('pointerover', () => {
