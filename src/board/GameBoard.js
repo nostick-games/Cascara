@@ -427,6 +427,10 @@ class GameBoard {
         this.effects.animateLightningSpawn(grid, row, col);
     }
 
+    animateChaosBonusTravel(playerColor, bonusType, row, col, onComplete) {
+        this.effects.animateChaosBonusTravel(playerColor, bonusType, row, col, onComplete);
+    }
+
     animateThaw(grid, row, col) {
         this.effects.animateThaw(grid, row, col);
     }

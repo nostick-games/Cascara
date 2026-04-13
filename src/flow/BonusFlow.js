@@ -153,7 +153,9 @@ class BonusFlow {
 
     consumePlaceBomb(row, col, playerColor) {
         this.playChaosGaugeDrain(playerColor, () => {
-            this.consumePlaceBombNow(row, col, playerColor);
+            this.scene.gameBoard.animateChaosBonusTravel(playerColor, 'PLACE_BOMB', row, col, () => {
+                this.consumePlaceBombNow(row, col, playerColor);
+            });
         });
         return true;
     }
@@ -199,7 +201,9 @@ class BonusFlow {
                 const spawnedLightningCell = this.scene.gameLogic.spawnLightningCell(this.scene.gameState.grid, playerColor);
                 didSpawn = Boolean(spawnedLightningCell);
                 if (spawnedLightningCell) {
-                    this.scene.gameBoard.animateLightningSpawn(this.scene.gameState.grid, spawnedLightningCell.row, spawnedLightningCell.col);
+                    this.scene.gameBoard.animateChaosBonusTravel(playerColor, bonusType, spawnedLightningCell.row, spawnedLightningCell.col, () => {
+                        this.scene.gameBoard.animateLightningSpawn(this.scene.gameState.grid, spawnedLightningCell.row, spawnedLightningCell.col);
+                    });
                 }
                 break;
             }
@@ -207,7 +211,9 @@ class BonusFlow {
                 const spawnedIceCell = this.scene.gameLogic.spawnIceCell(this.scene.gameState.grid, playerColor);
                 didSpawn = Boolean(spawnedIceCell);
                 if (spawnedIceCell) {
-                    this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedIceCell.row, spawnedIceCell.col);
+                    this.scene.gameBoard.animateChaosBonusTravel(playerColor, bonusType, spawnedIceCell.row, spawnedIceCell.col, () => {
+                        this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedIceCell.row, spawnedIceCell.col);
+                    });
                 }
                 break;
             }
@@ -215,13 +221,22 @@ class BonusFlow {
                 const spawnedSwampCell = this.scene.gameLogic.spawnSwampCell(this.scene.gameState.grid, playerColor);
                 didSpawn = Boolean(spawnedSwampCell);
                 if (spawnedSwampCell) {
-                    this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedSwampCell.row, spawnedSwampCell.col);
+                    this.scene.gameBoard.animateChaosBonusTravel(playerColor, bonusType, spawnedSwampCell.row, spawnedSwampCell.col, () => {
+                        this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedSwampCell.row, spawnedSwampCell.col);
+                    });
                 }
                 break;
             }
-            case 'BOMB':
-                didSpawn = this.spawnBombBonusCells(playerColor);
+            case 'BOMB': {
+                const spawnedBombCell = this.spawnBombBonusCells(playerColor);
+                didSpawn = Boolean(spawnedBombCell);
+                if (spawnedBombCell) {
+                    this.scene.gameBoard.animateChaosBonusTravel(playerColor, bonusType, spawnedBombCell.row, spawnedBombCell.col, () => {
+                        this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedBombCell.row, spawnedBombCell.col);
+                    });
+                }
                 break;
+            }
             default:
                 break;
         }
@@ -246,18 +261,21 @@ class BonusFlow {
 
     spawnBombBonusCells(ownerColor = null) {
         const spawnCount = this.scene.config.bombBonusSpawnCount || 1;
-        let spawnedCount = 0;
+        let firstSpawnedCell = null;
 
         for (let index = 0; index < spawnCount; index++) {
             const spawnedCell = this.scene.gameLogic.spawnSpecialCell(this.scene.gameState.grid, 'BOMB', null, null, ownerColor);
             if (spawnedCell) {
-                spawnedCount++;
-                this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedCell.row, spawnedCell.col);
+                if (!firstSpawnedCell) {
+                    firstSpawnedCell = spawnedCell;
+                } else {
+                    this.scene.gameBoard.drawPion(this.scene.gameState.grid, spawnedCell.row, spawnedCell.col);
+                }
             } else {
                 break;
             }
         }
 
-        return spawnedCount > 0;
+        return firstSpawnedCell;
     }
 }

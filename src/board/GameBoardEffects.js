@@ -4,9 +4,100 @@ class GameBoardEffects {
         this.scene = board.scene;
     }
 
+    getCellCenter(row, col) {
+        return {
+            x: this.board.GRID_OFFSET_X + col * this.board.CELL_SIZE + this.board.CELL_SIZE / 2,
+            y: this.board.GRID_OFFSET_Y + row * this.board.CELL_SIZE + this.board.CELL_SIZE / 2
+        };
+    }
+
+    createChaosBonusTravelToken(bonusType, x, y) {
+        const token = this.scene.add.container(x, y).setDepth(22);
+        const isNarrowViewport = this.scene.scale.width < 500;
+        const imageMap = {
+            PLACE_BOMB: 'bonus-bomb-icon',
+            BOMB: 'bonus-explosion-icon',
+            ICE: 'bonus-ice-icon',
+            SWAMP: 'bonus-swamp-icon'
+        };
+        const emojiMap = {
+            LIGHTNING: '⚡'
+        };
+        const imageKey = imageMap[bonusType] || null;
+
+        if (imageKey) {
+            const size = bonusType === 'PLACE_BOMB'
+                ? (isNarrowViewport ? 32 : 36)
+                : (isNarrowViewport ? 30 : 34);
+            token.add(
+                this.scene.add.image(0, 0, imageKey)
+                    .setOrigin(0.5)
+                    .setDisplaySize(size, size)
+            );
+            return token;
+        }
+
+        token.add(
+            this.scene.add.text(0, 0, emojiMap[bonusType] || '', {
+                fontSize: isNarrowViewport ? '28px' : '31px',
+                fill: '#111111',
+                fontFamily: 'Vollkorn',
+                align: 'center',
+                lineSpacing: -2
+            }).setOrigin(0.5)
+        );
+        return token;
+    }
+
+    animateChaosBonusTravel(playerColor, bonusType, row, col, onComplete = null) {
+        const gauge = this.board.lightningGaugeGraphics?.[playerColor];
+        if (!gauge) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        const { x: targetX, y: targetY } = this.getCellCenter(row, col);
+        const token = this.createChaosBonusTravelToken(bonusType, gauge.x, gauge.y);
+        token.setScale(0.8);
+
+        const travelTween = this.scene.tweens.add({
+            targets: token,
+            x: targetX,
+            y: targetY,
+            duration: 300,
+            ease: 'Cubic.easeInOut',
+            onComplete: () => {
+                this.scene.tweens.add({
+                    targets: token,
+                    scaleX: 1.15,
+                    scaleY: 1.15,
+                    alpha: 0,
+                    duration: 110,
+                    ease: 'Sine.easeOut',
+                    onComplete: () => {
+                        token.destroy(true);
+                        if (onComplete) onComplete();
+                    }
+                });
+            }
+        });
+
+        this.scene.tweens.add({
+            targets: token,
+            scaleX: 1.35,
+            scaleY: 1.35,
+            duration: 140,
+            ease: 'Back.easeOut',
+            yoyo: true,
+            hold: Math.max(0, travelTween.duration - 280),
+            onYoyo: () => {
+                token.setScale(1.02);
+            }
+        });
+    }
+
     animateSuperBombSpawn(grid, row, col) {
-        const targetX = this.board.GRID_OFFSET_X + col * this.board.CELL_SIZE + this.board.CELL_SIZE / 2;
-        const targetY = this.board.GRID_OFFSET_Y + row * this.board.CELL_SIZE + this.board.CELL_SIZE / 2;
+        const { x: targetX, y: targetY } = this.getCellCenter(row, col);
         const spawnY = targetY - Math.max(this.board.CELL_SIZE * 1.4, 42);
         const bombSize = Math.max(this.board.CELL_SIZE * 1.35, 48);
         const bombIcon = this.scene.add.image(targetX, spawnY, 'bonus-bomb-icon')
@@ -39,8 +130,7 @@ class GameBoardEffects {
     }
 
     animateLightningSpawn(grid, row, col) {
-        const targetX = this.board.GRID_OFFSET_X + col * this.board.CELL_SIZE + this.board.CELL_SIZE / 2;
-        const targetY = this.board.GRID_OFFSET_Y + row * this.board.CELL_SIZE + this.board.CELL_SIZE / 2;
+        const { y: targetY } = this.getCellCenter(row, col);
         const viewportWidth = this.scene.scale.width || this.scene.config.viewportWidth || 800;
         const cloudsY = this.board.GRID_OFFSET_Y - Math.max(34, Math.round(this.board.CELL_SIZE * 0.95));
         const leftCloud = this.scene.add.image(-20, cloudsY, 'bonus-lightning-clouds-left')
