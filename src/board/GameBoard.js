@@ -231,6 +231,7 @@ class GameBoard {
         const viewportHeight = this.scene.scale.height || this.scene.config.viewportHeight || 700;
         const isMobileViewport = viewportWidth < 500;
         const bottomBackgroundWidth = this.getBottomBackgroundWidth(viewportWidth);
+        const bottomBackgroundLeftX = this.getBottomBackgroundLeftX(bottomBackgroundWidth);
         const bottomBackgroundHeight = Math.round(
             (bottomBackgroundWidth / this.BOTTOM_DECOR_ROOF_SOURCE_WIDTH) * this.BOTTOM_DECOR_ROOF_SOURCE_HEIGHT
         );
@@ -242,21 +243,21 @@ class GameBoard {
                 minRoofTopY + bottomBackgroundHeight
             );
 
-        this.bottomDecorRoofSprite = this.scene.add.image(0, bottomBackgroundY, 'ui-bottom-decor-roof')
+        this.bottomDecorRoofSprite = this.scene.add.image(bottomBackgroundLeftX, bottomBackgroundY, 'ui-bottom-decor-roof')
             .setOrigin(0, 1)
             .setDisplaySize(bottomBackgroundWidth, bottomBackgroundHeight)
             .setDepth(-4);
 
         const bottomDecorEdgeY = bottomBackgroundY - this.BOTTOM_DECOR_EDGE_OFFSET_Y;
 
-        this.bottomDecorBooksSprite = this.scene.add.image(0, bottomDecorEdgeY, 'ui-bottom-decor-books')
+        this.bottomDecorBooksSprite = this.scene.add.image(bottomBackgroundLeftX, bottomDecorEdgeY, 'ui-bottom-decor-books')
             .setOrigin(0, 1)
             .setScale(this.BOTTOM_DECOR_EDGE_SCALE)
             .setDepth(-3.9);
 
         const skullX = isMobileViewport
-            ? viewportWidth + this.BOTTOM_DECOR_SKULL_MOBILE_OFFSET_X
-            : viewportWidth;
+            ? (bottomBackgroundLeftX + bottomBackgroundWidth + this.BOTTOM_DECOR_SKULL_MOBILE_OFFSET_X)
+            : (bottomBackgroundLeftX + bottomBackgroundWidth);
 
         this.bottomDecorSkullSprite = this.scene.add.image(skullX, bottomDecorEdgeY, 'ui-bottom-decor-skull')
             .setOrigin(1, 1)
@@ -286,7 +287,14 @@ class GameBoard {
 
     getBottomBackgroundWidth(viewportWidth = null) {
         const effectiveViewportWidth = viewportWidth || this.scene.scale.width || this.scene.config.viewportWidth || 800;
-        return effectiveViewportWidth + 10;
+        const gameWindowWidth = this.backgroundSprite?.displayWidth || this.scene.config.battleBackgroundWidth || this.GAUGE_WIDTH;
+        const horizontalBleed = effectiveViewportWidth < 500 ? 10 : 12;
+        return Math.min(effectiveViewportWidth + horizontalBleed, Math.round(gameWindowWidth + horizontalBleed));
+    }
+
+    getBottomBackgroundLeftX(bottomBackgroundWidth) {
+        const centerX = this.scene.config.battleBackgroundX || (this.GRID_OFFSET_X + this.GAUGE_WIDTH / 2);
+        return Math.round(centerX - (bottomBackgroundWidth / 2));
     }
 
     drawFrozenAreaOverlays(grid) {
