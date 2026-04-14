@@ -19,7 +19,3 @@ Ce guide regroupe désormais :
 - le Cristal de Cascara ;
 - les références de mode histoire ;
 - les éléments d'interface et de progression méta.
-
-## Anciens fichiers
-
-Les anciens documents séparés sont conservés comme points d'entrée historiques, mais leur contenu a été fusionné dans le guide principal pour éviter les divergences.
