@@ -31,12 +31,12 @@ class GameBoardGoalGaugePotions {
             .setAlpha(1);
     }
 
-    syncPotionSprite(potion, x, y) {
+    syncPotionSprite(potion, x, y, scale = this.board.PROGRESS_POTION_SCALE, shadowOffsetY = Math.round(20 * scale)) {
         let shadowSprite = this.board.progressPotionShadowMap[potion.id];
         if (!shadowSprite) {
             shadowSprite = this.scene.add.image(x, y + 20, 'progress-potion-shadow')
                 .setOrigin(0.5)
-                .setScale(this.board.PROGRESS_POTION_SCALE)
+                .setScale(scale)
                 .setDepth(15)
                 .setVisible(false);
             this.board.progressPotionShadowMap[potion.id] = shadowSprite;
@@ -47,7 +47,7 @@ class GameBoardGoalGaugePotions {
         if (!potionSprite) {
             potionSprite = this.scene.add.image(x, y, potion.textureKey)
                 .setOrigin(0.5)
-                .setScale(this.board.PROGRESS_POTION_SCALE)
+                .setScale(scale)
                 .setDepth(16);
             this.board.progressPotionSpriteMap[potion.id] = potionSprite;
             this.board.progressPotionSprites.push(potionSprite);
@@ -71,7 +71,8 @@ class GameBoardGoalGaugePotions {
                 !this.scene.gameState.selectingStartingPlayer &&
                 !this.scene.gameState.cascadeActive &&
                 !this.scene.gameState.specialActionInProgress,
-            turnsRemaining: potion.cooldownTurnsRemaining || 0
+            turnsRemaining: potion.cooldownTurnsRemaining || 0,
+            scale
         };
         const previousState = this.board.progressPotionRenderStateMap[potion.id];
 
@@ -79,9 +80,14 @@ class GameBoardGoalGaugePotions {
             return;
         }
 
-        shadowSprite.setPosition(x, y + 40);
+        shadowSprite
+            .setPosition(x, y + shadowOffsetY)
+            .setScale(scale);
 
-        potionSprite.setPosition(x, y).setVisible(true);
+        potionSprite
+            .setPosition(x, y)
+            .setScale(scale)
+            .setVisible(true);
         if (!previousState || previousState.textureKey !== renderState.textureKey) {
             potionSprite.setTexture(potion.textureKey);
         }
@@ -97,7 +103,7 @@ class GameBoardGoalGaugePotions {
                 .setText(`${refreshStatus.turnsRemaining}`)
                 .setVisible(true)
                 .setAlpha(1);
-            this.stopPotionPulse(potion.id, potionSprite);
+            this.stopPotionPulse(potion.id, potionSprite, scale);
             this.board.progressPotionRenderStateMap[potion.id] = renderState;
             return;
         }
@@ -112,7 +118,7 @@ class GameBoardGoalGaugePotions {
             if (!previousState || previousState.mode !== renderState.mode) {
                 potionSprite.clearTint().setAlpha(0.28);
             }
-            this.stopPotionPulse(potion.id, potionSprite);
+            this.stopPotionPulse(potion.id, potionSprite, scale);
             this.board.progressPotionRenderStateMap[potion.id] = renderState;
             return;
         }
@@ -128,9 +134,9 @@ class GameBoardGoalGaugePotions {
         }
 
         if (isSelectedPotion) {
-            this.startPotionPulse(potion.id, potionSprite);
+            this.startPotionPulse(potion.id, potionSprite, scale);
         } else {
-            this.stopPotionPulse(potion.id, potionSprite);
+            this.stopPotionPulse(potion.id, potionSprite, scale);
         }
 
         this.board.progressPotionRenderStateMap[potion.id] = renderState;
@@ -148,7 +154,8 @@ class GameBoardGoalGaugePotions {
             previousState.isSelected === nextState.isSelected &&
             previousState.currentPlayer === nextState.currentPlayer &&
             previousState.canInteract === nextState.canInteract &&
-            previousState.turnsRemaining === nextState.turnsRemaining;
+            previousState.turnsRemaining === nextState.turnsRemaining &&
+            previousState.scale === nextState.scale;
     }
 
     syncPotionCooldownText(potion, x, y) {
@@ -173,15 +180,15 @@ class GameBoardGoalGaugePotions {
         return cooldownText;
     }
 
-    startPotionPulse(potionId, potionSprite) {
+    startPotionPulse(potionId, potionSprite, baseScale = this.board.PROGRESS_POTION_SCALE) {
         if (this.board.progressPotionPulseTweens[potionId]) {
             return;
         }
 
         this.board.progressPotionPulseTweens[potionId] = this.scene.tweens.add({
             targets: potionSprite,
-            scaleX: 2.14,
-            scaleY: 2.14,
+            scaleX: Number((baseScale * 1.07).toFixed(2)),
+            scaleY: Number((baseScale * 1.07).toFixed(2)),
             duration: 240,
             yoyo: true,
             repeat: -1,
@@ -189,7 +196,7 @@ class GameBoardGoalGaugePotions {
         });
     }
 
-    stopPotionPulse(potionId, potionSprite) {
+    stopPotionPulse(potionId, potionSprite, baseScale = this.board.PROGRESS_POTION_SCALE) {
         const tween = this.board.progressPotionPulseTweens[potionId];
         if (tween) {
             tween.stop();
@@ -197,7 +204,7 @@ class GameBoardGoalGaugePotions {
         }
 
         if (potionSprite) {
-            potionSprite.setScale(2);
+            potionSprite.setScale(baseScale);
         }
     }
 

@@ -4,11 +4,28 @@ try {
     globalThis.CASCARA_SHOW_CHEATS = false;
 }
 
+function getViewportMetrics() {
+    const visualViewport = window.visualViewport;
+    if (visualViewport) {
+        return {
+            width: Math.round(visualViewport.width),
+            height: Math.round(visualViewport.height)
+        };
+    }
+
+    return {
+        width: Math.round(window.innerWidth),
+        height: Math.round(window.innerHeight)
+    };
+}
+
+const initialViewport = getViewportMetrics();
+
 // Configuration du jeu
 const config = {
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: initialViewport.width,
+    height: initialViewport.height,
     backgroundColor: '#B47C43',
     pixelArt: true,
     antialias: false,
@@ -52,3 +69,15 @@ const config = {
 
 // Initialisation du jeu
 const game = new Phaser.Game(config);
+
+function applyViewportResize() {
+    const viewport = getViewportMetrics();
+    game.config.width = viewport.width;
+    game.config.height = viewport.height;
+    game.scale.resize(viewport.width, viewport.height);
+}
+
+window.addEventListener('resize', applyViewportResize);
+window.addEventListener('orientationchange', applyViewportResize);
+window.visualViewport?.addEventListener('resize', applyViewportResize);
+window.visualViewport?.addEventListener('scroll', applyViewportResize);

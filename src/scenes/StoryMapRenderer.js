@@ -9,6 +9,7 @@ class StoryMapRenderer {
         const completedNodeIds = new Set(storyState.completedNodeIds || []);
 
         const nodePositions = {};
+        const nodeRowIndexes = {};
         const rowNodeIcons = [];
         const rowNodeChecks = [];
         storyState.rows.forEach((rowNodes, rowIndex) => {
@@ -20,8 +21,16 @@ class StoryMapRenderer {
                     x: laneX[node.lane] || centerX,
                     y
                 };
+                nodeRowIndexes[node.id] = rowIndex;
             });
         });
+
+        scene.storyMapLayout = {
+            nodePositions,
+            nodeRowIndexes,
+            iconSize,
+            isNarrowViewport
+        };
 
         const rowConnections = storyState.rows.map(() => []);
         storyState.rows.forEach((rowNodes, rowIndex) => {

@@ -4,9 +4,17 @@ class StoryModePlaceholderScene extends Phaser.Scene {
         this.storyMap = null;
         this.selectedNodeId = null;
         this.exitConfirmModal = null;
+        this.storyHeroSprite = null;
+        this.storyMapSelectionLocked = false;
     }
 
     init(data) {
+        this.selectedNodeId = null;
+        this.exitConfirmModal = null;
+        this.storyHeroSprite = null;
+        this.storyMapSelectionLocked = false;
+        this.storyMapLayout = null;
+
         if (data?.language) {
             TranslationManager.setLanguage(data.language);
         }
@@ -54,6 +62,18 @@ class StoryModePlaceholderScene extends Phaser.Scene {
         this.load.image('story-potion-marron', 'assets/images/bonus/potion_marron.png');
         this.load.image('story-potion-blanche', 'assets/images/bonus/potion_white.png');
         this.load.image('story-potion-cyan', 'assets/images/bonus/potion_cyan.png');
+        this.load.spritesheet('story-hero-idle-face', 'assets/images/hero/idle_face.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.spritesheet('story-hero-walk-down', 'assets/images/hero/walk_down.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        this.load.spritesheet('story-hero-walk-right', 'assets/images/hero/walk_right.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
     }
 
     create() {
@@ -65,6 +85,7 @@ class StoryModePlaceholderScene extends Phaser.Scene {
         const preExistingObjects = new Set(this.children.list);
 
         this.cameras.main.setBackgroundColor('#060606');
+        this.ensureStoryHeroAnimations();
 
         const parchmentMaxWidth = isNarrowViewport
             ? viewportWidth - 22
@@ -114,6 +135,7 @@ class StoryModePlaceholderScene extends Phaser.Scene {
         );
 
         this.drawStoryMap(centerX, mapTopY, mapBottomY, mapWidth, isNarrowViewport);
+        this.createStoryHeroMarker();
         this.drawLegend(
             centerX,
             parchmentBottomY + (isNarrowViewport ? 50 : 54),
@@ -329,6 +351,10 @@ class StoryModePlaceholderScene extends Phaser.Scene {
     }
 
     selectStoryNode(selectedNode, rowNodes) {
+        if (this.storyMapSelectionLocked) {
+            return;
+        }
+
         this.selectedNodeId = selectedNode.id;
         rowNodes.forEach((node) => {
             if (!node.icon) {
@@ -347,40 +373,39 @@ class StoryModePlaceholderScene extends Phaser.Scene {
             });
         });
 
-        if (selectedNode.type === 'fight' || selectedNode.type === 'elite' || selectedNode.type === 'boss') {
-            this.time.delayedCall(150, () => {
-                if (this.selectedNodeId === selectedNode.id) {
-                    this.launchStoryEncounter(selectedNode.type);
-                }
-            });
-            return;
-        }
+        this.storyMapSelectionLocked = true;
+        this.playStoryHeroTravel(selectedNode, () => {
+            if (this.selectedNodeId !== selectedNode.id) {
+                this.storyMapSelectionLocked = false;
+                return;
+            }
 
-        if (selectedNode.type === 'merchant') {
-            this.time.delayedCall(150, () => {
-                if (this.selectedNodeId === selectedNode.id) {
-                    this.scene.start('StoryMerchantScene', {
-                        language: TranslationManager.getLanguage(),
-                        selectedNodeId: this.selectedNodeId,
-                        storyState: this.serializeStoryState()
-                    });
-                }
-            });
-            return;
-        }
+            if (selectedNode.type === 'fight' || selectedNode.type === 'elite' || selectedNode.type === 'boss') {
+                this.launchStoryEncounter(selectedNode.type);
+                return;
+            }
 
-        if (selectedNode.type === 'surprise') {
-            this.time.delayedCall(150, () => {
-                if (this.selectedNodeId === selectedNode.id) {
-                    this.scene.start('StoryEventScene', {
-                        language: TranslationManager.getLanguage(),
-                        selectedNodeId: this.selectedNodeId,
-                        storyState: this.serializeStoryState(),
-                        eventId: selectedNode.eventId || null
-                    });
-                }
-            });
-        }
+            if (selectedNode.type === 'merchant') {
+                this.scene.start('StoryMerchantScene', {
+                    language: TranslationManager.getLanguage(),
+                    selectedNodeId: this.selectedNodeId,
+                    storyState: this.serializeStoryState()
+                });
+                return;
+            }
+
+            if (selectedNode.type === 'surprise') {
+                this.scene.start('StoryEventScene', {
+                    language: TranslationManager.getLanguage(),
+                    selectedNodeId: this.selectedNodeId,
+                    storyState: this.serializeStoryState(),
+                    eventId: selectedNode.eventId || null
+                });
+                return;
+            }
+
+            this.storyMapSelectionLocked = false;
+        });
     }
 
     launchStoryEncounter(nodeType) {
@@ -446,6 +471,149 @@ class StoryModePlaceholderScene extends Phaser.Scene {
 
     drawDashedLine(graphics, x1, y1, x2, y2, color, alpha, dashLength, gapLength, progress = 1) {
         StoryMapRenderer.drawDashedLine(graphics, x1, y1, x2, y2, color, alpha, dashLength, gapLength, progress);
+    }
+
+    ensureStoryHeroAnimations() {
+        if (!this.anims.exists('story-hero-idle-face')) {
+            this.anims.create({
+                key: 'story-hero-idle-face',
+                frames: this.anims.generateFrameNumbers('story-hero-idle-face', { start: 0, end: 3 }),
+                frameRate: 7,
+                repeat: -1
+            });
+        }
+
+        if (!this.anims.exists('story-hero-walk-down')) {
+            this.anims.create({
+                key: 'story-hero-walk-down',
+                frames: this.anims.generateFrameNumbers('story-hero-walk-down', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
+
+        if (!this.anims.exists('story-hero-walk-right')) {
+            this.anims.create({
+                key: 'story-hero-walk-right',
+                frames: this.anims.generateFrameNumbers('story-hero-walk-right', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
+    }
+
+    getStoryHeroAnchorNodeId() {
+        const completedNodeIds = this.storyState?.completedNodeIds || [];
+        if (completedNodeIds.length > 0) {
+            return completedNodeIds[completedNodeIds.length - 1];
+        }
+
+        const currentNodeIds = this.storyState?.currentNodeIds || [];
+        return currentNodeIds[0] || null;
+    }
+
+    getStoryHeroIdlePosition(nodeId) {
+        const position = this.storyMapLayout?.nodePositions?.[nodeId];
+        if (!position) {
+            return null;
+        }
+
+        const heroOffsetX = this.storyMapLayout?.isNarrowViewport ? 26 : 30;
+        const heroOffsetY = this.storyMapLayout?.isNarrowViewport ? 24 : 26;
+        return {
+            x: position.x + heroOffsetX,
+            y: position.y + heroOffsetY
+        };
+    }
+
+    createStoryHeroMarker() {
+        const anchorNodeId = this.getStoryHeroAnchorNodeId();
+        const heroPosition = this.getStoryHeroIdlePosition(anchorNodeId);
+        if (!heroPosition) {
+            return;
+        }
+
+        if (this.storyHeroSprite?.active) {
+            this.storyHeroSprite.destroy();
+        }
+
+        this.storyHeroSprite = this.add.sprite(heroPosition.x, heroPosition.y, 'story-hero-idle-face', 0)
+            .setOrigin(0.5, 1)
+            .setScale(this.storyMapLayout?.isNarrowViewport ? 1.35 : 1.5)
+            .setDepth(14)
+            .setAlpha(0);
+        this.storyHeroSprite.play('story-hero-idle-face');
+
+        const rowIndex = this.storyMapLayout?.nodeRowIndexes?.[anchorNodeId] || 0;
+        const revealDelay = this.getStoryMapNodeRevealDelay(rowIndex);
+        this.storyHeroSprite.y += 8;
+        this.tweens.add({
+            targets: this.storyHeroSprite,
+            alpha: 1,
+            y: heroPosition.y,
+            delay: revealDelay + 60,
+            duration: 180,
+            ease: 'Sine.easeOut'
+        });
+    }
+
+    getStoryMapNodeRevealDelay(rowIndex) {
+        if (rowIndex <= 0) {
+            return 0;
+        }
+
+        const lineDuration = 240;
+        const lineGap = 40;
+        const nodeDuration = 180;
+        const nodeGap = 90;
+        const perRowDelay = lineDuration + lineGap + nodeDuration + nodeGap;
+        return rowIndex * perRowDelay;
+    }
+
+    playStoryHeroTravel(selectedNode, onComplete) {
+        if (!this.storyHeroSprite?.active) {
+            this.time.delayedCall(150, () => {
+                if (onComplete) onComplete();
+            });
+            return;
+        }
+
+        const targetPosition = this.getStoryHeroIdlePosition(selectedNode.id);
+        if (!targetPosition) {
+            this.time.delayedCall(150, () => {
+                if (onComplete) onComplete();
+            });
+            return;
+        }
+
+        const deltaX = targetPosition.x - this.storyHeroSprite.x;
+        const isStraightDown = Math.abs(deltaX) < 8;
+
+        if (isStraightDown) {
+            this.storyHeroSprite.setFlipX(false);
+            this.storyHeroSprite.play('story-hero-walk-down', true);
+        } else {
+            this.storyHeroSprite.setFlipX(deltaX < 0);
+            this.storyHeroSprite.play('story-hero-walk-right', true);
+        }
+
+        this.tweens.add({
+            targets: this.storyHeroSprite,
+            x: targetPosition.x,
+            y: targetPosition.y,
+            duration: isStraightDown ? 420 : 520,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+                if (!this.storyHeroSprite?.active) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                this.storyHeroSprite.setFlipX(false);
+                this.storyHeroSprite.play('story-hero-idle-face', true);
+                if (onComplete) onComplete();
+            }
+        });
     }
 
     createUiButton(x, y, width, height, label, fontSize = '16px') {

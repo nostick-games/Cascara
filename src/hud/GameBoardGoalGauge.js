@@ -98,7 +98,10 @@ class GameBoardGoalGauge {
         const progressPotions = this.scene.gameState.progressPotions || [];
         const gaugeInnerWidth = totalSegmentsWidth;
         const gaugeInnerLeft = segmentsStartX;
-        const potionY = this.board.getBottomBackgroundPotionAnchorY();
+        const potionLayout = this.board.getBottomBackgroundPotionLayout();
+        const potionY = potionLayout.y;
+        const potionScale = potionLayout.scale;
+        const potionShadowOffsetY = potionLayout.shadowOffsetY;
         const potionSpacing = 100;
         const potionStartX = gaugeOuterX + Math.floor(gaugeOuterWidth / 2) - Math.floor(((progressPotions.length - 1) * potionSpacing) / 2);
         const usedPotionIds = new Set();
@@ -111,7 +114,7 @@ class GameBoardGoalGauge {
             const notchReached = progressPercent >= effectiveThreshold;
             const potionX = potionStartX + index * potionSpacing;
             this.potions.syncPotionNotch(potion, notchX, gaugeOuterY + Math.floor(gaugeOuterHeight / 2), !potion.consumed && !notchReached);
-            this.potions.syncPotionSprite(potion, potionX, potionY);
+            this.potions.syncPotionSprite(potion, potionX, potionY, potionScale, potionShadowOffsetY);
         });
 
         this.potions.cleanupPotionDisplay(usedPotionIds);

@@ -22,7 +22,8 @@ class GameBoard {
         this.BOTTOM_DECOR_EDGE_OFFSET_Y = 18;
         this.BOTTOM_DECOR_SKULL_MOBILE_OFFSET_X = 14;
         this.BOTTOM_DECOR_POTION_ANCHOR_SOURCE_Y = 32;
-        this.BOTTOM_DECOR_POTION_MOBILE_TOP_OFFSET_Y = 0;
+        this.BOTTOM_DECOR_POTION_MOBILE_TOP_OFFSET_Y = -10;
+        this.BOTTOM_DECOR_POTION_MIN_GAUGE_GAP_Y = 10;
         this.BONUS_GAUGE_COLORS = {
             ROUGE: 0xAC3232,
             BLEU: 0x5B6EE1,
@@ -266,23 +267,56 @@ class GameBoard {
     }
 
     getBottomBackgroundPotionAnchorY() {
+        return this.getBottomBackgroundPotionLayout().y;
+    }
+
+    getProgressPotionScale() {
+        return this.getBottomBackgroundPotionLayout().scale;
+    }
+
+    getBottomBackgroundPotionLayout() {
+        const baseScale = this.PROGRESS_POTION_SCALE;
+        const defaultShadowOffsetY = Math.round(20 * baseScale);
+
         if (this.bottomDecorRoofSprite?.active) {
             const roofHeight = this.bottomDecorRoofSprite.displayHeight || 0;
             const roofTopY = this.bottomDecorRoofSprite.y - roofHeight;
+            const roofBottomY = this.bottomDecorRoofSprite.y;
             const viewportWidth = this.scene.scale.width || this.scene.config.viewportWidth || 800;
             const isMobileViewport = viewportWidth < 500;
 
             if (isMobileViewport) {
-                return roofTopY +
-                    this.BOTTOM_DECOR_POTION_MOBILE_TOP_OFFSET_Y +
-                    Math.round((this.PROGRESS_POTION_SOURCE_HEIGHT * this.PROGRESS_POTION_SCALE) / 2);
+                const minimumPotionTopY = this.GAUGE_Y + this.GAUGE_HEIGHT + this.BOTTOM_DECOR_POTION_MIN_GAUGE_GAP_Y;
+                const potionTopY = Math.max(
+                    roofTopY + this.BOTTOM_DECOR_POTION_MOBILE_TOP_OFFSET_Y,
+                    minimumPotionTopY
+                );
+                const availableHeight = Math.max(24, roofBottomY - potionTopY - 8);
+                const compactScale = Math.min(
+                    baseScale,
+                    Math.max(1.45, availableHeight / this.PROGRESS_POTION_SOURCE_HEIGHT)
+                );
+
+                return {
+                    y: potionTopY + Math.round((this.PROGRESS_POTION_SOURCE_HEIGHT * compactScale) / 2),
+                    scale: Number(compactScale.toFixed(2)),
+                    shadowOffsetY: Math.round(20 * compactScale)
+                };
             }
 
             const roofScale = roofHeight / this.BOTTOM_DECOR_ROOF_SOURCE_HEIGHT;
-            return roofTopY + Math.round(this.BOTTOM_DECOR_POTION_ANCHOR_SOURCE_Y * roofScale);
+            return {
+                y: roofTopY + Math.round(this.BOTTOM_DECOR_POTION_ANCHOR_SOURCE_Y * roofScale),
+                scale: baseScale,
+                shadowOffsetY: defaultShadowOffsetY
+            };
         }
 
-        return this.GAUGE_Y + this.GAUGE_HEIGHT + this.PROGRESS_POTION_ROW_OFFSET_Y;
+        return {
+            y: this.GAUGE_Y + this.GAUGE_HEIGHT + this.PROGRESS_POTION_ROW_OFFSET_Y,
+            scale: baseScale,
+            shadowOffsetY: defaultShadowOffsetY
+        };
     }
 
     getBottomBackgroundWidth(viewportWidth = null) {
