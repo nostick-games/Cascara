@@ -234,6 +234,10 @@ class GameSceneFlow {
         this.progressPotions.handleProgressPotionClick(potionId);
     }
 
+    handleProgressPotionInfoClick(potionId) {
+        this.progressPotions.handleProgressPotionInfoClick(potionId);
+    }
+
     activateProgressPotionMode(potionId, options = {}) {
         this.progressPotions.activateProgressPotionMode(potionId, options);
     }

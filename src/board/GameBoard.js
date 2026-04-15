@@ -41,11 +41,13 @@ class GameBoard {
         this.progressPotionSprites = [];
         this.progressPotionShadows = [];
         this.progressPotionCooldownTexts = [];
+        this.progressPotionInfoButtons = [];
         this.progressPotionSpriteMap = {};
         this.progressPotionShadowMap = {};
         this.progressPotionRenderStateMap = {};
         this.progressPotionNotchMap = {};
         this.progressPotionCooldownTextMap = {};
+        this.progressPotionInfoButtonMap = {};
         this.progressPotionPulseTweens = {};
         this.potionCheatPanel = null;
         this.potionCheatSprites = [];

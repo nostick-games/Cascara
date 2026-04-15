@@ -17,6 +17,9 @@ class CenteredPromptModal {
         const bodyText = options.bodyText || '';
         const buttonLabel = options.buttonLabel || '';
         const onConfirm = typeof options.onConfirm === 'function' ? options.onConfirm : null;
+        const contentBuilder = typeof options.contentBuilder === 'function' ? options.contentBuilder : null;
+        const cleanupCallbacks = [];
+        const refs = {};
 
         const overlay = scene.add.container(0, 0).setDepth(depth);
         const blocker = scene.add.rectangle(centerX, centerY, viewportWidth, viewportHeight, 0x000000, overlayAlpha)
@@ -52,6 +55,9 @@ class CenteredPromptModal {
                     .setOrigin(0.5)
                     .setDisplaySize(titleIconSize, titleIconSize);
                 const title = scene.add.text(textX, 0, titleText, titleStyle).setOrigin(0, 0);
+                refs.titleIcon = titleIcon;
+                refs.titleRow = titleRow;
+                refs.titleIconSize = titleIconSize;
 
                 titleRow.add([titleIcon, title]);
                 children.push(titleRow);
@@ -72,14 +78,36 @@ class CenteredPromptModal {
             currentY += iconSize + (isNarrowViewport ? 12 : 16);
         }
 
-        const body = scene.add.text(0, currentY, bodyText, {
-            fontSize: isNarrowViewport ? '17px' : '20px',
-            fill: '#fff6df',
-            fontFamily: 'Vollkorn',
-            align: 'center',
-            wordWrap: { width: panelWidth - 34 }
-        }).setOrigin(0.5, 0);
-        children.push(body);
+        if (contentBuilder) {
+            const builtContent = contentBuilder(scene, {
+                panelWidth,
+                panelHeight,
+                isNarrowViewport,
+                currentY,
+                bodyWidth: panelWidth - 34
+            }, refs);
+
+            if (builtContent?.displayObject) {
+                builtContent.displayObject.setPosition(0, currentY);
+                children.push(builtContent.displayObject);
+                currentY += builtContent.height || 0;
+            }
+
+            if (typeof builtContent?.onDestroy === 'function') {
+                cleanupCallbacks.push(builtContent.onDestroy);
+            }
+        }
+
+        if (bodyText) {
+            const body = scene.add.text(0, currentY, bodyText, {
+                fontSize: isNarrowViewport ? '17px' : '20px',
+                fill: '#fff6df',
+                fontFamily: 'Vollkorn',
+                align: 'center',
+                wordWrap: { width: panelWidth - 34 }
+            }).setOrigin(0.5, 0);
+            children.push(body);
+        }
 
         const button = this.createActionButton(
             scene,
@@ -103,6 +131,7 @@ class CenteredPromptModal {
                     duration: 180,
                     ease: 'Quad.In',
                     onComplete: () => {
+                        cleanupCallbacks.forEach((callback) => callback());
                         overlay.destroy(true);
                         if (onConfirm) {
                             onConfirm();

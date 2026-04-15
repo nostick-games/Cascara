@@ -131,6 +131,76 @@ class ProgressPotionFlow {
         }
     }
 
+    handleProgressPotionInfoClick(potionId) {
+        if (this.scene.gameState.gameOver ||
+            this.scene.gameState.selectingStartingPlayer ||
+            this.scene.gameState.currentPlayer !== 'ROUGE' ||
+            this.scene.gameState.cascadeActive ||
+            this.scene.gameState.specialActionInProgress ||
+            this.scene.gameState.pendingProgressPotion !== potionId ||
+            this.scene.activeProgressPotionInfoModal) {
+            return;
+        }
+
+        const potion = (this.scene.gameState.progressPotions || []).find(
+            (entry) => entry.id === potionId && !entry.consumed && entry.active
+        );
+        if (!potion) {
+            return;
+        }
+
+        const titleKey = `potion.${potion.id.toLowerCase()}.title`;
+        const effectKey = `potion.${potion.id.toLowerCase()}.effect`;
+        const title = TranslationManager.t(titleKey);
+        const effect = TranslationManager.t(effectKey);
+
+        this.scene.activeProgressPotionInfoModal = CenteredPromptModal.show(this.scene, {
+            width: this.scene.scale.width < 500 ? 332 : 424,
+            height: this.scene.scale.width < 500 ? 404 : 438,
+            depth: 42,
+            titleText: title,
+            titleIconTextureKey: potion.textureKey,
+            titleIconSize: this.scene.scale.width < 500 ? 28 : 32,
+            bodyText: effect,
+            contentBuilder: potion.id === 'ORANGE'
+                ? (scene, context, refs) => ProgressPotionInfoDemos.buildOrangeDemo(scene, context, refs, {
+                    potionTextureKey: potion.textureKey,
+                    gameBoard: this.scene.gameBoard
+                })
+                : potion.id === 'MENTHE'
+                    ? (scene, context, refs) => ProgressPotionInfoDemos.buildMentheDemo(scene, context, refs, {
+                        potionTextureKey: potion.textureKey,
+                        gameBoard: this.scene.gameBoard
+                    })
+                    : potion.id === 'ROSE'
+                    ? (scene, context, refs) => ProgressPotionInfoDemos.buildRoseDemo(scene, context, refs, {
+                        potionTextureKey: potion.textureKey,
+                        gameBoard: this.scene.gameBoard
+                    })
+                    : potion.id === 'MARRON'
+                        ? (scene, context, refs) => ProgressPotionInfoDemos.buildMarronDemo(scene, context, refs, {
+                            potionTextureKey: potion.textureKey,
+                            gameBoard: this.scene.gameBoard
+                        })
+                    : potion.id === 'BLANCHE'
+                        ? (scene, context, refs) => ProgressPotionInfoDemos.buildBlancheDemo(scene, context, refs, {
+                            potionTextureKey: potion.textureKey,
+                            gameBoard: this.scene.gameBoard
+                        })
+                    : potion.id === 'CYAN'
+                        ? (scene, context, refs) => ProgressPotionInfoDemos.buildCyanDemo(scene, context, refs, {
+                            potionTextureKey: potion.textureKey,
+                            gameBoard: this.scene.gameBoard
+                        })
+                    : null,
+            buttonLabel: TranslationManager.t('potion.info.seen_button'),
+            buttonWidth: this.scene.scale.width < 500 ? 126 : 140,
+            onConfirm: () => {
+                this.scene.activeProgressPotionInfoModal = null;
+            }
+        });
+    }
+
     activateProgressPotionMode(potionId, options = {}) {
         const { persistent = false, duration = 220, onComplete = null } = options;
 

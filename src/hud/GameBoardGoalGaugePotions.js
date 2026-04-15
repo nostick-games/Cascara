@@ -104,6 +104,7 @@ class GameBoardGoalGaugePotions {
                 .setVisible(true)
                 .setAlpha(1);
             this.stopPotionPulse(potion.id, potionSprite, scale);
+            this.syncPotionInfoButton(potion, x, y, scale, false);
             this.board.progressPotionRenderStateMap[potion.id] = renderState;
             return;
         }
@@ -119,6 +120,7 @@ class GameBoardGoalGaugePotions {
                 potionSprite.clearTint().setAlpha(0.28);
             }
             this.stopPotionPulse(potion.id, potionSprite, scale);
+            this.syncPotionInfoButton(potion, x, y, scale, false);
             this.board.progressPotionRenderStateMap[potion.id] = renderState;
             return;
         }
@@ -139,7 +141,66 @@ class GameBoardGoalGaugePotions {
             this.stopPotionPulse(potion.id, potionSprite, scale);
         }
 
+        this.syncPotionInfoButton(
+            potion,
+            x,
+            y,
+            scale,
+            isSelectedPotion && renderState.canInteract
+        );
+
         this.board.progressPotionRenderStateMap[potion.id] = renderState;
+    }
+
+    syncPotionInfoButton(potion, x, y, scale, visible) {
+        let button = this.board.progressPotionInfoButtonMap[potion.id];
+        if (!button) {
+            const radius = 13;
+            const background = this.scene.add.circle(0, 0, radius, 0xffffff, 1)
+                .setStrokeStyle(3, 0x000000, 1);
+            const label = this.scene.add.text(0, 0, '?', {
+                fontSize: '20px',
+                fill: '#000000',
+                fontFamily: 'Vollkorn',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+            const hitArea = this.scene.add.zone(0, 0, radius * 2.4, radius * 2.4)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true });
+            const container = this.scene.add.container(0, 0, [background, label, hitArea])
+                .setDepth(18)
+                .setVisible(false);
+
+            hitArea.on('pointerdown', () => {
+                this.scene.handleProgressPotionInfoClick(potion.id);
+            });
+            hitArea.on('pointerover', () => {
+                container.setScale(1.06);
+            });
+            hitArea.on('pointerout', () => {
+                container.setScale(1);
+            });
+
+            button = { container, hitArea };
+            this.board.progressPotionInfoButtonMap[potion.id] = button;
+            this.board.progressPotionInfoButtons.push(container);
+        }
+
+        const progressPotions = this.scene.gameState.progressPotions || [];
+        const potionIndex = progressPotions.findIndex((entry) => entry.id === potion.id);
+        const isRightmostPotion = potionIndex === progressPotions.length - 1;
+        const offsetX = Math.round((22 * scale) + 18) * (isRightmostPotion ? -1 : 1);
+
+        button.container
+            .setPosition(x + offsetX, y)
+            .setVisible(visible);
+
+        if (visible) {
+            button.hitArea.setInteractive({ useHandCursor: true });
+        } else {
+            button.hitArea.disableInteractive();
+            button.container.setScale(1);
+        }
     }
 
     isSamePotionRenderState(previousState, nextState) {
@@ -251,6 +312,16 @@ class GameBoardGoalGaugePotions {
             delete this.board.progressPotionCooldownTextMap[potionId];
         });
         this.board.progressPotionCooldownTexts = this.board.progressPotionCooldownTexts.filter((text) => text.active);
+
+        Object.entries(this.board.progressPotionInfoButtonMap).forEach(([potionId, button]) => {
+            if (usedPotionIds.has(potionId)) {
+                return;
+            }
+
+            button.container.destroy();
+            delete this.board.progressPotionInfoButtonMap[potionId];
+        });
+        this.board.progressPotionInfoButtons = this.board.progressPotionInfoButtons.filter((button) => button.active);
     }
 
     getPotionRefreshStatus(potion) {

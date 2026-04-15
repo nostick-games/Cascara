@@ -318,6 +318,10 @@ class GameScene extends Phaser.Scene {
         this.flow.handleProgressPotionClick(potionId);
     }
 
+    handleProgressPotionInfoClick(potionId) {
+        this.flow.handleProgressPotionInfoClick(potionId);
+    }
+
     handleEnemyIntentClick(color) {
         this.flow.handleEnemyIntentClick(color);
     }
